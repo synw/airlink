@@ -14,7 +14,7 @@ Download [airlink_server](https://github.com/synw/airlink/releases/download/0.1.
 
 ## Config
 
-Server: place a `config.json` file next to the binary:
+**Server**: place a `config.json` file next to the binary:
 
    ```json
    {
@@ -23,4 +23,6 @@ Server: place a `config.json` file next to the binary:
    }
    ```
 
-Client: go to the settings in the app to set the server parameters
+To serve data create a `static` folder next to the server binary: this is the root folder for the data to be served
+
+**Client**: go to the settings in the app to set the server parameters
