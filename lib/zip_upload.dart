@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:archive/archive_io.dart';
 import 'package:dio/dio.dart';
 import 'package:filesize/filesize.dart' as fs;
-import '../models.dart';
-import '../exceptions.dart';
-import '../conf.dart';
+import 'models.dart';
+import 'exceptions.dart';
+import 'conf.dart';
 
 Future<File> zip(
     {@required DirectoryItem directory, @required BuildContext context}) async {

@@ -4,7 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:open_file/open_file.dart';
 import "bloc_file_explorer.dart";
 import "models.dart";
-import 'zip_upload/zip_upload.dart';
+import 'zip_upload.dart';
 import 'conf.dart';
 import 'remote_file_explorer.dart';
 import 'settings/settings.dart';
@@ -39,10 +39,8 @@ class _DataviewPageState extends State<DataviewPage> {
                 icon: const Icon(Icons.settings_remote, size: 20.0),
                 tooltip: 'Settings',
                 onPressed: () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (BuildContext context) {
-                    return SettingsPage();
-                  }));
+                  Navigator.of(context).push<SettingsPage>(MaterialPageRoute(
+                      builder: (BuildContext context) => SettingsPage()));
                 },
               ),
               IconButton(
@@ -64,7 +62,7 @@ class _DataviewPageState extends State<DataviewPage> {
                           tooltip: 'Show remote view',
                           onPressed: () => setState(
                               () => remoteViewActive = !remoteViewActive))
-                  : Text("")
+                  : const Text("")
             ]),
         body: Container(
             child: Stack(children: <Widget>[
@@ -74,12 +72,12 @@ class _DataviewPageState extends State<DataviewPage> {
                     path: path,
                     bloc: _bloc,
                     slidableController: _slidableController)),
-            remoteViewActive ? Divider(height: 25.0) : Text(""),
+            remoteViewActive ? const Divider(height: 25.0) : const Text(""),
             remoteViewActive
                 ? Container(
                     height: MediaQuery.of(context).size.height / 2.35,
                     child: RemoteFileExplorer(path))
-                : Text(""),
+                : const Text(""),
           ])
         ])));
   }

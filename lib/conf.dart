@@ -20,7 +20,7 @@ final settingsDb = Db();
 var dio = new Dio(BaseOptions(
   connectTimeout: 5000,
   receiveTimeout: 10000,
-  headers: {HttpHeaders.authorizationHeader: "Bearer $apiKey"},
+  headers: <String, dynamic>{HttpHeaders.authorizationHeader: "Bearer $apiKey"},
 ));
 
 var log = ErrRouter(
@@ -33,16 +33,16 @@ Completer<Null> _readyCompleter = Completer<Null>();
 
 Future<Null> get onConfReady => _readyCompleter.future;
 
-initConf() async {
+Future<void> initConf() async {
   initSettingsDb(db: settingsDb, path: "settings.sqlite");
   externalDirectory = await getExternalStorageDirectory();
   await settingsDb.onReady;
   getSettingsValues(settingsDb).then((row) {
     String protocol;
-    row["https"] ? protocol = "https" : protocol = "http";
+    (row["https"] == true) ? protocol = "https" : protocol = "http";
     serverUrl = "$protocol://${row["server_url"]}:${row["port"]}";
-    apiKey = row["api_key"];
-    serverConfigured = row["configured"];
+    apiKey = row["api_key"].toString();
+    serverConfigured = (row["configured"] == true);
     _readyCompleter.complete();
   });
 }

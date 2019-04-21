@@ -4,7 +4,7 @@ import 'conf.dart';
 
 class Downloader {
   final _completedController = StreamController<bool>();
-  DownloadCallback callback;
+  dynamic callback;
 
   Stream<bool> get completedController => _completedController.stream;
 
@@ -20,7 +20,8 @@ class Downloader {
         savedDir: externalDirectory.path + path,
         showNotification: true);
     await FlutterDownloader.loadTasks();
-    callback = FlutterDownloader.registerCallback((id, status, progress) async {
+    callback = FlutterDownloader.registerCallback(
+        (String id, DownloadTaskStatus status, int progress) async {
       if (status == DownloadTaskStatus.complete) {
         _completedController.sink.add(true);
       }

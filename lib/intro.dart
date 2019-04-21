@@ -6,10 +6,9 @@ class _IntroPageState extends State<IntroPage> {
   @override
   void initState() {
     onConfReady.then((_) {
-      Navigator.of(context)
-          .pushReplacement(MaterialPageRoute(builder: (BuildContext context) {
-        return DataviewPage("/");
-      }));
+      Navigator.of(context).pushReplacement<IntroPage, DataviewPage>(
+          MaterialPageRoute(
+              builder: (BuildContext context) => DataviewPage("/")));
     });
     super.initState();
   }
@@ -25,8 +24,8 @@ class _IntroPageState extends State<IntroPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Image.asset("assets/logo_txt.png"),
-            Padding(padding: EdgeInsets.only(bottom: 15.0)),
-            CircularProgressIndicator(backgroundColor: Colors.grey),
+            const Padding(padding: EdgeInsets.only(bottom: 15.0)),
+            const CircularProgressIndicator(backgroundColor: Colors.grey),
           ],
         )));
   }

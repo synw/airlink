@@ -79,10 +79,12 @@ class RemoteDirectoryListing {
     var dirs = <RemoteDirectory>[];
     var files = <RemoteFile>[];
     for (var item in data["files"]) {
-      files.add(RemoteFile(name: item["name"], size: item["size"]));
+      files.add(RemoteFile(
+          name: item["name"].toString(),
+          size: int.parse(item["size"].toString())));
     }
     for (var item in data["directories"]) {
-      dirs.add(RemoteDirectory(name: item["name"]));
+      dirs.add(RemoteDirectory(name: item["name"].toString()));
     }
     this.directories = dirs;
     this.files = files;

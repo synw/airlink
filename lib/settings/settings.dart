@@ -36,10 +36,10 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     getSettingsValues(settingsDb).then((Map<String, dynamic> row) {
-      _https = row["https"];
-      _port = row["port"];
-      _rawServerUrl = row["server_url"];
-      _apiKey = row["api_key"];
+      _https = (row["https"] == true);
+      _port = int.parse(row["port"].toString());
+      _rawServerUrl = row["server_url"].toString();
+      _apiKey = row["api_key"].toString();
       setState(() => _ready = true);
     });
     super.initState();
@@ -49,7 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text("Settings"),
+          title: const Text("Settings"),
         ),
         body: _ready
             ? Form(
@@ -94,7 +94,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
               )
-            : Center(child: CircularProgressIndicator()));
+            : Center(child: const CircularProgressIndicator()));
   }
 }
 

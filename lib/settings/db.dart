@@ -28,7 +28,7 @@ Future<Map<String, dynamic>> getSettingsValues(Db db) async {
       columns: "server_url,port,api_key,https,configured");
   bool protocol;
   row = result[0];
-  Map<String, dynamic> endResult = {};
+  var endResult = <String, dynamic>{};
   endResult["server_url"] = row["server_url"];
   endResult["port"] = row["port"];
   endResult["api_key"] = row["api_key"];
