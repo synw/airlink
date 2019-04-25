@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:async';
-import "models.dart";
+import "models/filesystem.dart";
 
 Future<void> rm(DirectoryItem item) async {
   try {

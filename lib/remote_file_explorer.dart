@@ -4,10 +4,12 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:filesize/filesize.dart';
 import 'package:dio/dio.dart';
 import 'conf.dart';
-import 'models.dart';
+import 'models/filesystem.dart';
 import 'file_icons.dart';
 import 'downloader.dart';
 import 'file_explorer.dart';
+import 'state.dart';
+import 'log.dart';
 
 class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
   _RemoteFileExplorerState(this.path);
@@ -19,29 +21,33 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
   SlidableController _slidableController;
 
   Future<void> getData() async {
-    assert(serverUrl != null);
-    assert(apiKey != null);
+    assert(state.activeDataLink != null);
+    print("GET ${state.activeDataLink.address}");
+    print("GET ${state.httpClient}");
     try {
-      var response = await dio.post<Map<String, dynamic>>("$serverUrl/ls",
-          data: FormData.from(<String, dynamic>{"path": remotePath}));
+      var response = await state.httpClient.post<Map<String, dynamic>>(
+          "${state.activeDataLink.address}/ls",
+          data: FormData.from(<String, dynamic>{"path": state.remotePath}));
       setState(() => listing = RemoteDirectoryListing.fromJson(response.data));
     } on DioError catch (e) {
       setState(() {
-        remoteViewActive = false;
-        Navigator.of(context).pushReplacement<RemoteFileExplorer, DataviewPage>(
-            MaterialPageRoute(
-                builder: (BuildContext context) => DataviewPage(path)));
-        String msg = "Can not connect to server: ${e.type} : ${e.message}";
+        state.remoteViewActive = false;
+        Navigator.of(context)
+            .pushReplacement<RemoteFileExplorer, FileExplorerPage>(
+                MaterialPageRoute(
+                    builder: (BuildContext context) => FileExplorerPage(path)));
+        String msg = "Can not connect to server: $e";
         log.errorScreen(msg, context: context);
       });
       return false;
     } catch (e) {
       setState(() {
-        remoteViewActive = false;
-        Navigator.of(context).pushReplacement<RemoteFileExplorer, DataviewPage>(
-            MaterialPageRoute(
-                builder: (BuildContext context) => DataviewPage(path)));
-        String msg = "Can not connect to server: ${e.type} : ${e.message}";
+        state.remoteViewActive = false;
+        Navigator.of(context)
+            .pushReplacement<RemoteFileExplorer, FileExplorerPage>(
+                MaterialPageRoute(
+                    builder: (BuildContext context) => FileExplorerPage(path)));
+        String msg = "Can not connect to server: $e";
         log.errorScreen(msg, context: context);
       });
       return false;
@@ -56,16 +62,16 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
 
   List<Widget> buildListing(RemoteDirectoryListing listing) {
     var w = <Widget>[];
-    if (remotePath != "/" && remotePath != "")
+    if (state.remotePath != "/" && state.remotePath != "")
       w.add(GestureDetector(
         child: ListTile(
           leading: const Icon(Icons.arrow_upward),
           title: const Text("..", textScaleFactor: 1.5),
         ),
         onTap: () {
-          var li = remotePath.split("/");
+          var li = state.remotePath.split("/");
           li.removeLast();
-          remotePath = li.join("/");
+          state.remotePath = li.join("/");
           getData();
         },
       ));
@@ -76,9 +82,9 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
             leading: const Icon(Icons.folder, color: Colors.orange),
             title: Text(dir.name)),
         onTap: () {
-          (remotePath != "/")
-              ? remotePath = remotePath + "/" + dir.name
-              : remotePath = remotePath + dir.name;
+          (state.remotePath != "/")
+              ? state.remotePath = state.remotePath + "/" + dir.name
+              : state.remotePath = state.remotePath + dir.name;
           getData();
         },
       ));
@@ -102,17 +108,18 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
             icon: Icons.file_download,
             onTap: () {
               log.infoFlash("Downloading file");
-              String url = serverUrl + remotePath + "/" + file.name;
+              String url =
+                  state.activeDataLink.url + state.remotePath + "/" + file.name;
               var dl = Downloader();
               dl.download(url, path);
               dl.completedController.listen((_) {
                 dl.dispose();
                 try {
                   Navigator.of(context)
-                      .pushReplacement<RemoteFileExplorer, DataviewPage>(
+                      .pushReplacement<RemoteFileExplorer, FileExplorerPage>(
                           MaterialPageRoute(
                               builder: (BuildContext context) =>
-                                  DataviewPage(path)));
+                                  FileExplorerPage(path)));
                 } catch (_) {}
                 log.infoFlash("Download completed");
               });

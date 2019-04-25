@@ -1,4 +1,6 @@
 {
+	"name": "Local file server",
 	"port": "8084",
-	"apiKey": "API_KEY"
+	"apiKey": "API_KEY",
+	"protocol": "http"
 }

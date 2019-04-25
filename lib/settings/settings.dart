@@ -1,104 +1,144 @@
 import 'package:flutter/material.dart';
-import 'package:card_settings/card_settings.dart';
-import 'db.dart';
 import '../conf.dart';
+import '../models/data_link.dart';
+import 'data_link/scan.dart';
+import 'data_link/manual.dart';
+import '../state.dart';
 
 class _SettingsPageState extends State<SettingsPage> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  @override
+  void didChangeDependencies() {
+    if (state.activeDataLink == null) addDataLinkDialog(context);
+    super.didChangeDependencies();
+  }
 
-  bool _https;
-  String _rawServerUrl;
-  String _apiKey;
-  int _port;
+  @override
+  Widget build(BuildContext context) {
+    Widget w;
+    state.activeDataLink != null ? w = ListDataLinks() : w = const Text("");
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Data links"),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => addDataLinkDialog(context),
+          )
+        ],
+      ),
+      body: w,
+    );
+  }
+}
 
-  final _focusNode = FocusNode();
+class _ListDataLinksState extends State<ListDataLinks> {
+  var dataLinks = <DataLink>[];
 
-  bool _ready = false;
-
-  Future<void> save(BuildContext context) async {
-    try {
-      await saveSettings(
-          db: settingsDb,
-          serverUrl: _rawServerUrl,
-          port: _port,
-          apiKey: _apiKey,
-          https: _https);
-    } catch (e) {
-      log.criticalScreen("$e", context: context);
-    }
-    String protocol;
-    _https ? protocol = "https" : protocol = "http";
-    serverUrl = "$protocol://$_rawServerUrl:$_port";
-    apiKey = _apiKey;
-    serverConfigured = true;
+  Future<List<DataLink>> initDataLinks() async {
+    var dl = await db.getDataLinks();
+    return dl;
   }
 
   @override
   void initState() {
-    getSettingsValues(settingsDb).then((Map<String, dynamic> row) {
-      _https = (row["https"] == true);
-      _port = int.parse(row["port"].toString());
-      _rawServerUrl = row["server_url"].toString();
-      _apiKey = row["api_key"].toString();
-      setState(() => _ready = true);
-    });
+    initDataLinks().then((dl) => setState(() => dataLinks = dl));
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text("Settings"),
-        ),
-        body: _ready
-            ? Form(
-                key: _formKey,
-                child: CardSettings(
-                  children: <Widget>[
-                    CardSettingsHeader(label: 'Server settings'),
-                    CardSettingsText(
-                        focusNode: _focusNode,
-                        autofocus: true,
-                        label: 'Server url',
-                        initialValue: _rawServerUrl,
-                        validator: (value) {
-                          if (value == null || value.isEmpty)
-                            return 'The server url is required.';
-                        },
-                        onChanged: (value) => _rawServerUrl = value),
-                    CardSettingsSwitch(
-                        label: "Https protocol",
-                        initialValue: _https,
-                        onChanged: (value) => _https = value),
-                    CardSettingsText(
-                        label: 'Api key',
-                        initialValue: _apiKey ?? "",
-                        validator: (value) {
-                          if (value == null || value.isEmpty)
-                            return 'The api key is required.';
-                        },
-                        onChanged: (value) => _apiKey = value),
-                    CardSettingsInt(
-                        label: "Port",
-                        initialValue: _port,
-                        onChanged: (value) => _port = value),
-                    CardSettingsButton(
-                        label: "Save",
-                        onPressed: () {
-                          save(context).then((_) {
-                            Navigator.of(context).pop();
-                            log.infoFlash("Settings saved");
-                          });
-                        })
-                  ],
-                ),
-              )
-            : Center(child: const CircularProgressIndicator()));
+    var w = <SwitchListTile>[];
+    dataLinks.forEach((dl) {
+      w.add(SwitchListTile(
+          value: (dl.id == state.activeDataLink.id),
+          onChanged: (val) => null,
+          title: Text(dl.name)));
+    });
+    return ListView(children: w);
   }
+}
+
+class NoDataLink extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+        padding: const EdgeInsets.all(35.0),
+        child: Center(
+          child: RaisedButton(
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.link),
+                const Text(" Add a data link")
+              ],
+            ),
+            onPressed: () => addDataLinkDialog(context),
+          ),
+        ));
+  }
+}
+
+void addDataLinkDialog(BuildContext context) {
+  showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+            title: const Text("Add a data link"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                RaisedButton(
+                    child: Row(
+                      children: <Widget>[
+                        const Icon(Icons.scanner),
+                        const Text("Scan"),
+                      ],
+                    ),
+                    onPressed: () {
+                      scanDataLinkConfig().then((DataLink dataLink) {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push<AddDataLinkManual>(
+                            MaterialPageRoute(
+                                builder: (BuildContext context) =>
+                                    AddDataLinkManual(
+                                      focus: false,
+                                      name: dataLink.name,
+                                      apiKey: dataLink.apiKey,
+                                      url: dataLink.url,
+                                      https: (dataLink.protocol == "https"),
+                                      port: int.parse(dataLink.port),
+                                    )));
+                      });
+                    }),
+                const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
+                RaisedButton(
+                  child: Row(
+                    children: <Widget>[
+                      const Icon(Icons.edit),
+                      const Text("Configure"),
+                    ],
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushNamed("/add_data_link_manual");
+                  },
+                ),
+                const Padding(padding: EdgeInsets.only(bottom: 15.0)),
+              ],
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            ],
+          ));
 }
 
 class SettingsPage extends StatefulWidget {
   @override
   _SettingsPageState createState() => _SettingsPageState();
+}
+
+class ListDataLinks extends StatefulWidget {
+  @override
+  _ListDataLinksState createState() => _ListDataLinksState();
 }

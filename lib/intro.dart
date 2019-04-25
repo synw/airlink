@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'conf.dart';
+import 'state.dart';
 import 'file_explorer.dart';
 
 class _IntroPageState extends State<IntroPage> {
   @override
   void initState() {
-    onConfReady.then((_) {
-      Navigator.of(context).pushReplacement<IntroPage, DataviewPage>(
+    state.onReady.then((_) {
+      Navigator.of(context).pushReplacement<IntroPage, FileExplorerPage>(
           MaterialPageRoute(
-              builder: (BuildContext context) => DataviewPage("/")));
+              builder: (BuildContext context) => FileExplorerPage("/")));
     });
     super.initState();
   }

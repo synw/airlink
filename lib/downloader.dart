@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'state.dart';
 import 'conf.dart';
 
 class Downloader {
@@ -15,7 +16,7 @@ class Downloader {
 
   Future<void> download(String url, String path) async {
     await FlutterDownloader.enqueue(
-        headers: {"Authorization": "Bearer $apiKey"},
+        headers: {"Authorization": "Bearer ${state.activeDataLink.apiKey}"},
         url: url,
         savedDir: externalDirectory.path + path,
         showNotification: true);

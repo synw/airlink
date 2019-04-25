@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -11,8 +15,13 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/mdp/qrterminal"
+	qrcode "github.com/skip2/go-qrcode"
 	"github.com/spf13/viper"
 )
+
+var genConfCode = flag.Bool("c", false, "Generate autoconfig qr code")
+var genConfCodeImg = flag.Bool("ci", false, "Generate autoconfig qr code image")
 
 type File struct {
 	Name string `json:"name"`
@@ -28,16 +37,44 @@ type DirectoryListing struct {
 	Directories []Directory `json:"directories"`
 }
 
-func getConf() (string, string, error) {
+type Config struct {
+	Name     string `json:"name"`
+	URL      string `json:"url"`
+	APIKey   string `json:"apiKey"`
+	Port     string `json:"port"`
+	Protocol string `json:"protocol"`
+}
+
+func getIPAddress() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP
+}
+
+func getConf() (Config, error) {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
+	config := Config{}
 	err := viper.ReadInConfig()
 	if err != nil {
-		return "", "", err
+		return config, err
 	}
+	name := viper.Get("name").(string)
 	apiKey := viper.Get("apiKey").(string)
 	port := viper.Get("port").(string)
-	return port, apiKey, nil
+	protocol := viper.Get("protocol").(string)
+	config = Config{
+		Name:     name,
+		URL:      getIPAddress().String(),
+		APIKey:   apiKey,
+		Port:     port,
+		Protocol: protocol,
+	}
+	return config, nil
 }
 
 func upload(c echo.Context) error {
@@ -88,12 +125,37 @@ func readDir(root string) (DirectoryListing, error) {
 }
 
 func main() {
+	flag.Parse()
 
-	port, apiKey, err := getConf()
+	config, err := getConf()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	k := apiKey
+
+	if *genConfCodeImg == true {
+		b, _ := json.Marshal(&config)
+		data := string(b)
+		err := qrcode.WriteFile(data,
+			qrcode.Medium, 256, "qr_config.png")
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	} else if *genConfCode == true {
+		qrConfig := qrterminal.Config{
+			Level:     qrterminal.M,
+			Writer:    os.Stdout,
+			BlackChar: qrterminal.BLACK,
+			WhiteChar: qrterminal.WHITE,
+			QuietZone: 5,
+		}
+		b, _ := json.Marshal(&config)
+		data := string(b)
+		qrterminal.GenerateWithConfig(data, qrConfig)
+		return
+	}
+
+	k := config.APIKey
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -115,5 +177,5 @@ func main() {
 	})
 	e.POST("/upload", upload)
 
-	e.Logger.Fatal(e.Start(":" + port))
+	e.Logger.Fatal(e.Start(":" + config.Port))
 }

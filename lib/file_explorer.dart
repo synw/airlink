@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:open_file/open_file.dart';
 import "bloc_file_explorer.dart";
-import "models.dart";
+import "models/filesystem.dart";
 import 'zip_upload.dart';
-import 'conf.dart';
 import 'remote_file_explorer.dart';
 import 'settings/settings.dart';
+import 'state.dart';
 
-class _DataviewPageState extends State<DataviewPage> {
-  _DataviewPageState(this.path) : assert(path != null) {
+class _FileExplorerPageState extends State<FileExplorerPage> {
+  _FileExplorerPageState(this.path) : assert(path != null) {
     _bloc = ItemsBloc(path);
   }
 
@@ -36,7 +36,14 @@ class _DataviewPageState extends State<DataviewPage> {
                 child: Image.asset('assets/logo_small.png', height: 40.0)),
             actions: <Widget>[
               IconButton(
-                icon: const Icon(Icons.settings_remote, size: 20.0),
+                icon: const Icon(Icons.folder, size: 20.0),
+                tooltip: 'Dataview',
+                onPressed: () {
+                  Navigator.of(context).pushNamed("/dataview");
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings, size: 20.0),
                 tooltip: 'Settings',
                 onPressed: () {
                   Navigator.of(context).push<SettingsPage>(MaterialPageRoute(
@@ -50,18 +57,18 @@ class _DataviewPageState extends State<DataviewPage> {
                   _addDir(context);
                 },
               ),
-              serverConfigured
-                  ? remoteViewActive
+              state.activeDataLink != null
+                  ? state.remoteViewActive
                       ? IconButton(
                           icon: const Icon(Icons.close),
                           tooltip: 'Hide remote view',
-                          onPressed: () => setState(
-                              () => remoteViewActive = !remoteViewActive))
+                          onPressed: () => setState(() =>
+                              state.remoteViewActive = !state.remoteViewActive))
                       : IconButton(
                           icon: const Icon(Icons.cloud_queue),
                           tooltip: 'Show remote view',
-                          onPressed: () => setState(
-                              () => remoteViewActive = !remoteViewActive))
+                          onPressed: () => setState(() =>
+                              state.remoteViewActive = !state.remoteViewActive))
                   : const Text("")
             ]),
         body: Container(
@@ -72,8 +79,10 @@ class _DataviewPageState extends State<DataviewPage> {
                     path: path,
                     bloc: _bloc,
                     slidableController: _slidableController)),
-            remoteViewActive ? const Divider(height: 25.0) : const Text(""),
-            remoteViewActive
+            state.remoteViewActive
+                ? const Divider(height: 25.0)
+                : const Text(""),
+            state.remoteViewActive
                 ? Container(
                     height: MediaQuery.of(context).size.height / 2.35,
                     child: RemoteFileExplorer(path))
@@ -177,8 +186,8 @@ class ExplorerListing extends StatelessWidget {
         if (item.isDirectory) {
           //p = item.path;
           Navigator.of(context)
-              .push(MaterialPageRoute<DataviewPage>(builder: (context) {
-            return DataviewPage(p);
+              .push(MaterialPageRoute<FileExplorerPage>(builder: (context) {
+            return FileExplorerPage(p);
           }));
         } else {
           OpenFile.open(item.path);
@@ -195,14 +204,14 @@ class ExplorerListing extends StatelessWidget {
       icon: Icons.delete,
       onTap: () => _confirmDeleteDialog(context, item),
     ));
-    if (serverUrl != null) {
+    if (state.activeDataLink != null) {
       if (item.item is File) {
         ic.add(IconSlideAction(
           caption: 'Upload',
           color: Colors.lightBlue,
           icon: Icons.file_upload,
           onTap: () => upload(
-                serverUrl: serverUrl,
+                serverUrl: state.activeDataLink.url,
                 filename: item.filename,
                 file: File(item.item.path),
                 context: context,
@@ -214,7 +223,10 @@ class ExplorerListing extends StatelessWidget {
             color: Colors.lightBlue,
             icon: Icons.file_upload,
             onTap: () {
-              zipUpload(directory: item, serverUrl: serverUrl, context: context)
+              zipUpload(
+                      directory: item,
+                      serverUrl: state.activeDataLink.url,
+                      context: context)
                   .catchError((dynamic e) {
                 throw (e);
               });
@@ -254,11 +266,11 @@ class ExplorerListing extends StatelessWidget {
   }
 }
 
-class DataviewPage extends StatefulWidget {
-  DataviewPage(this.path);
+class FileExplorerPage extends StatefulWidget {
+  FileExplorerPage(this.path);
 
   final String path;
 
   @override
-  _DataviewPageState createState() => _DataviewPageState(path);
+  _FileExplorerPageState createState() => _FileExplorerPageState(path);
 }

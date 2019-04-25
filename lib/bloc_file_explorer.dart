@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:dio/dio.dart';
-import "models.dart";
+import "models/filesystem.dart";
 import "commands.dart";
 import 'conf.dart';
+import 'state.dart';
 
 class ItemsBloc {
   ItemsBloc(this.path) : assert(path.startsWith("/")) {

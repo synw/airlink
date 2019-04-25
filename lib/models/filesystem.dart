@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:filesize/filesize.dart' as fs;
-import 'file_icons.dart';
+import '../file_icons.dart';
 
 class ListedDirectory {
   ListedDirectory(

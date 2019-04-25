@@ -5,9 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:archive/archive_io.dart';
 import 'package:dio/dio.dart';
 import 'package:filesize/filesize.dart' as fs;
-import 'models.dart';
+import 'models/filesystem.dart';
 import 'exceptions.dart';
-import 'conf.dart';
+import 'log.dart';
+import 'state.dart';
 
 Future<File> zip(
     {@required DirectoryItem directory, @required BuildContext context}) async {
@@ -56,7 +57,8 @@ Future<bool> upload(
   try {
     //print("URL $serverUrl");
     //print("FORM $formData");
-    response = await dio.post<dynamic>(serverUrl + "/upload", data: formData);
+    response = await state.httpClient
+        .post<dynamic>(serverUrl + "/upload", data: formData);
   } on DioError catch (e) {
     String msg = "Can not upload: ${e.type} : ${e.message}";
     log.errorScreen(msg, context: context);
