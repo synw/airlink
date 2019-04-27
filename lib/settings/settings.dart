@@ -7,15 +7,9 @@ import '../state.dart';
 
 class _SettingsPageState extends State<SettingsPage> {
   @override
-  void didChangeDependencies() {
-    if (state.activeDataLink == null) addDataLinkDialog(context);
-    super.didChangeDependencies();
-  }
-
-  @override
   Widget build(BuildContext context) {
     Widget w;
-    state.activeDataLink != null ? w = ListDataLinks() : w = const Text("");
+    state.activeDataLink != null ? w = ListDataLinks() : w = AddDataLink();
     return Scaffold(
       appBar: AppBar(
         title: const Text("Data links"),
@@ -50,7 +44,7 @@ class _ListDataLinksState extends State<ListDataLinks> {
     var w = <SwitchListTile>[];
     dataLinks.forEach((dl) {
       w.add(SwitchListTile(
-          value: (dl.id == state.activeDataLink.id),
+          value: (dl.name == state.activeDataLink.name),
           onChanged: (val) => null,
           title: Text(dl.name)));
     });
@@ -58,21 +52,13 @@ class _ListDataLinksState extends State<ListDataLinks> {
   }
 }
 
-class NoDataLink extends StatelessWidget {
+class AddDataLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
         padding: const EdgeInsets.all(35.0),
         child: Center(
-          child: RaisedButton(
-            child: Row(
-              children: <Widget>[
-                const Icon(Icons.link),
-                const Text(" Add a data link")
-              ],
-            ),
-            onPressed: () => addDataLinkDialog(context),
-          ),
+          child: const AddDataLinkButtons(),
         ));
   }
 }
@@ -82,48 +68,7 @@ void addDataLinkDialog(BuildContext context) {
       context: context,
       builder: (BuildContext context) => AlertDialog(
             title: const Text("Add a data link"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                RaisedButton(
-                    child: Row(
-                      children: <Widget>[
-                        const Icon(Icons.scanner),
-                        const Text("Scan"),
-                      ],
-                    ),
-                    onPressed: () {
-                      scanDataLinkConfig().then((DataLink dataLink) {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).push<AddDataLinkManual>(
-                            MaterialPageRoute(
-                                builder: (BuildContext context) =>
-                                    AddDataLinkManual(
-                                      focus: false,
-                                      name: dataLink.name,
-                                      apiKey: dataLink.apiKey,
-                                      url: dataLink.url,
-                                      https: (dataLink.protocol == "https"),
-                                      port: int.parse(dataLink.port),
-                                    )));
-                      });
-                    }),
-                const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
-                RaisedButton(
-                  child: Row(
-                    children: <Widget>[
-                      const Icon(Icons.edit),
-                      const Text("Configure"),
-                    ],
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pushNamed("/add_data_link_manual");
-                  },
-                ),
-                const Padding(padding: EdgeInsets.only(bottom: 15.0)),
-              ],
-            ),
+            content: const AddDataLinkButtons(),
             actions: <Widget>[
               FlatButton(
                 child: const Text("Cancel"),
@@ -133,12 +78,66 @@ void addDataLinkDialog(BuildContext context) {
           ));
 }
 
-class SettingsPage extends StatefulWidget {
+class AddDataLinkButtons extends StatelessWidget {
+  const AddDataLinkButtons({
+    Key key,
+  }) : super(key: key);
+
   @override
-  _SettingsPageState createState() => _SettingsPageState();
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        RaisedButton(
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.scanner),
+                const Text("Scan"),
+              ],
+            ),
+            onPressed: () {
+              scanDataLinkConfig().then((DataLink dataLink) {
+                Navigator.of(context).pop();
+                Navigator.of(context).push<AddDataLinkManual>(MaterialPageRoute(
+                    builder: (BuildContext context) => AddDataLinkManual(
+                          focus: false,
+                          name: dataLink.name,
+                          apiKey: dataLink.apiKey,
+                          url: dataLink.url,
+                          https: (dataLink.protocol == "https"),
+                          port: int.parse(dataLink.port),
+                        )));
+              });
+            }),
+        const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
+        RaisedButton(
+          child: Row(
+            children: <Widget>[
+              const Icon(Icons.edit),
+              const Text("Configure"),
+            ],
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).pushNamed("/add_data_link_manual");
+          },
+        ),
+        const Padding(padding: EdgeInsets.only(bottom: 15.0)),
+      ],
+    );
+  }
 }
 
 class ListDataLinks extends StatefulWidget {
   @override
   _ListDataLinksState createState() => _ListDataLinksState();
+}
+
+class SettingsPage extends StatefulWidget {
+  SettingsPage({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  _SettingsPageState createState() => _SettingsPageState();
 }

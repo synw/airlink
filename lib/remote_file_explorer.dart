@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:filesize/filesize.dart';
 import 'package:dio/dio.dart';
-import 'conf.dart';
 import 'models/filesystem.dart';
 import 'file_icons.dart';
 import 'downloader.dart';
@@ -27,7 +26,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
     try {
       var response = await state.httpClient.post<Map<String, dynamic>>(
           "${state.activeDataLink.address}/ls",
-          data: FormData.from(<String, dynamic>{"path": state.remotePath}));
+          data: <String, dynamic>{"path": state.remotePath});
       setState(() => listing = RemoteDirectoryListing.fromJson(response.data));
     } on DioError catch (e) {
       setState(() {
@@ -108,8 +107,11 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
             icon: Icons.file_download,
             onTap: () {
               log.infoFlash("Downloading file");
+              String path;
+              (state.remotePath == "/") ? path = "" : path = state.remotePath;
               String url =
-                  state.activeDataLink.url + state.remotePath + "/" + file.name;
+                  state.activeDataLink.address + path + "/" + file.name;
+              print("Downloading $url");
               var dl = Downloader();
               dl.download(url, path);
               dl.completedController.listen((_) {

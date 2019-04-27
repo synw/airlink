@@ -69,7 +69,7 @@ class DataBase {
     row["active_data_link"] = adl[0]["id"].toString();
     try {
       int updated = await db.update(table: "state", where: "id=1", row: row);
-      print("ACTIVE DATA LINK UPDATED: $updated");
+      print("DB ACTIVE DATA LINK UPDATED: $updated");
     } catch (e) {
       throw (e);
     }

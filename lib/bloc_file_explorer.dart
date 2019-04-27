@@ -7,7 +7,7 @@ import 'conf.dart';
 import 'state.dart';
 
 class ItemsBloc {
-  ItemsBloc(this.path) : assert(path.startsWith("/")) {
+  ItemsBloc(this.path) {
     _currentDirectory = Directory(externalDirectory.path + path);
     lsDir(_currentDirectory);
   }

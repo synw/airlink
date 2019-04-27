@@ -43,6 +43,13 @@ class _FileExplorerPageState extends State<FileExplorerPage> {
                 },
               ),
               IconButton(
+                icon: const Icon(Icons.speaker_phone, size: 20.0),
+                tooltip: 'Server',
+                onPressed: () {
+                  Navigator.of(context).pushNamed("/server_config");
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.settings, size: 20.0),
                 tooltip: 'Settings',
                 onPressed: () {

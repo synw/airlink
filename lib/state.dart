@@ -33,6 +33,8 @@ class AppState {
     _readyCompleter.complete();
   }
 
+  Future<void> switchActiveDataLink(DataLink dataLink) async {}
+
   Future<void> setActiveDataLink(
       {@required DataLink dataLink, @required BuildContext context}) async {
     assert(dataLink != null);
@@ -45,7 +47,7 @@ class AppState {
     } catch (e) {
       throw ('Can not update persistant state');
     }
-    log.debug("STATE active dl: $activeDataLink");
+    log.debug("STATE active dl SET: $activeDataLink");
   }
 
   Dio getHttpClient() {

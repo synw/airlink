@@ -100,7 +100,6 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
                   label: "Save",
                   onPressed: () async {
                     await save(context).then((_) {
-                      Navigator.of(context).pop();
                       Navigator.of(context).pushReplacementNamed('/settings');
                     });
                     log.infoFlash("Data link saved");
