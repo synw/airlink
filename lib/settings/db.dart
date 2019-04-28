@@ -22,14 +22,49 @@ class DataBase {
       String q2 = """CREATE TABLE state (
     id INTEGER PRIMARY KEY,
     active_data_link INTEGER,
-    FOREIGN KEY (active_data_link) REFERENCES data_link(id)
+    upload_path VARCHAR(255),
+    root_path VARCHAR(255),
+    FOREIGN KEY (active_data_link) REFERENCES data_link(id)    
     )""";
       String q3 = "CREATE UNIQUE INDEX idx_data_link ON data_link (name)";
-      String q4 = "INSERT INTO state VALUES(1, NULL)";
+      String q4 = """INSERT INTO state VALUES(1, NULL, NULL, NULL)""";
       await db.init(path: path, queries: [q, q2, q3, q4], verbose: true);
     } catch (e) {
       throw (e);
     }
+  }
+
+  Future<void> setRootDirectory(String dirPath) async {
+    try {
+      Map<String, String> row = {"root_path": dirPath};
+      db.update(table: "state", where: "id=1", row: row);
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  Future<void> setUploadDirectory(String dirPath) async {
+    try {
+      Map<String, String> row = {"upload_path": dirPath};
+      db.update(table: "state", where: "id=1", row: row);
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  Future<Map<String, String>> getInitialState() async {
+    Map<String, String> result = {"root_path": null, "upload_path": null};
+    try {
+      List<Map<String, dynamic>> res = await db.select(
+          table: "state", where: "id=1", columns: "upload_path,root_path");
+      if (res[0]["upload_path"].toString() != "null")
+        result["upload_path"] = res[0]["upload_path"].toString();
+      if (res[0]["root_path"].toString() != "null")
+        result["root_path"] = res[0]["root_path"].toString();
+    } catch (e) {
+      throw (e);
+    }
+    return result;
   }
 
   Future<DataLink> getDataLink(int id) async {
@@ -70,6 +105,23 @@ class DataBase {
     try {
       int updated = await db.update(table: "state", where: "id=1", row: row);
       print("DB ACTIVE DATA LINK UPDATED: $updated");
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  Future<void> setActiveDataLinkStateNull() async {
+    try {
+      Map<String, String> row = {"active_data_link": "NULL"};
+      await db.update(table: "state", where: "id=1", row: row);
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  Future<void> deleteDataLink(DataLink dataLink) async {
+    try {
+      db.delete(table: "data_link", where: "id=${dataLink.id}");
     } catch (e) {
       throw (e);
     }

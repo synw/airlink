@@ -16,23 +16,25 @@ class FileServer {
   bool _isInitialized = false;
   bool _isRunning = false;
 
-  HttpServer _server;
+  Stream<HttpRequest> _server;
+  StreamSubscription _serverSub;
   final Completer<Null> _readyCompleter = Completer<Null>();
 
   Future<Null> get onReady => _readyCompleter.future;
   bool get isInitialized => _isInitialized;
+  bool get isRunning => _isRunning;
 
   void init(
       {@required DataLink dataLink,
       @required Directory rootDirectory,
       @required Directory uploadDirectory}) {
-    print("INIT SERVER AT $_dataLink");
+    print("INIT SERVER AT $dataLink");
     _rootDirectory = rootDirectory;
     _uploadDirectory = uploadDirectory;
     _dataLink = dataLink;
     HttpServer.bind(_dataLink.url, int.parse(_dataLink.port))
         .then((HttpServer server) {
-      _server = server;
+      _server = server.asBroadcastStream();
       _readyCompleter.complete();
       _isInitialized = true;
     });
@@ -66,7 +68,7 @@ class FileServer {
     }
     // process request
     String content = await request.transform(const Utf8Decoder()).join();
-    Map data;
+    Map<dynamic, dynamic> data;
     try {
       data = jsonDecode(content) as Map;
     } catch (e) {
@@ -93,7 +95,7 @@ class FileServer {
     if (_isRunning) log.warning("The server is already running");
     await onReady;
     log.info("STARTING SERVER");
-    _server.listen((request) {
+    _serverSub = _server.listen((request) {
       switch (request.method) {
         case 'POST':
           _handlePost(request);
@@ -106,10 +108,10 @@ class FileServer {
     _isRunning = true;
   }
 
-  void stop() {
+  void stop() async {
     if (_isRunning) {
       log.info("STOPPING SERVER");
-      _server.close();
+      await _serverSub.cancel();
       _isRunning = false;
     }
     log.warning("The server is already running");

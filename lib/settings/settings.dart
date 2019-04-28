@@ -42,13 +42,56 @@ class _ListDataLinksState extends State<ListDataLinks> {
   @override
   Widget build(BuildContext context) {
     var w = <SwitchListTile>[];
-    dataLinks.forEach((dl) {
+    dataLinks.forEach((dataLink) {
       w.add(SwitchListTile(
-          value: (dl.name == state.activeDataLink.name),
-          onChanged: (val) => null,
-          title: Text(dl.name)));
+          value: (dataLink.name == state.activeDataLink.name),
+          onChanged: (val) {
+            if (val)
+              state
+                  .setActiveDataLink(dataLink: dataLink, context: context)
+                  .then((_) => setState(() {}));
+            else {
+              if (state.activeDataLink.name == dataLink.name)
+                state.setActiveDataLinkNull().then((_) => setState(() {}));
+            }
+          },
+          title: GestureDetector(
+            child: Text(dataLink.name),
+            onTap: () => deleteDataLink(context, dataLink),
+          )));
     });
     return ListView(children: w);
+  }
+
+  void deleteDataLink(BuildContext context, DataLink dataLink) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Delete ${dataLink.name}?"),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            RaisedButton(
+              child: const Text("Delete"),
+              color: Colors.red,
+              textColor: Colors.white,
+              onPressed: () async {
+                Navigator.of(context).pop();
+                if (state.activeDataLink.name == dataLink.name)
+                  await state.setActiveDataLinkNull();
+                await db.deleteDataLink(dataLink);
+                setState(() {});
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -98,15 +141,18 @@ class AddDataLinkButtons extends StatelessWidget {
             onPressed: () {
               scanDataLinkConfig().then((DataLink dataLink) {
                 Navigator.of(context).pop();
-                Navigator.of(context).push<AddDataLinkManual>(MaterialPageRoute(
-                    builder: (BuildContext context) => AddDataLinkManual(
-                          focus: false,
-                          name: dataLink.name,
-                          apiKey: dataLink.apiKey,
-                          url: dataLink.url,
-                          https: (dataLink.protocol == "https"),
-                          port: int.parse(dataLink.port),
-                        )));
+                Navigator.of(context)
+                    .pushReplacement<SettingsPage, AddDataLinkManual>(
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                AddDataLinkManual(
+                                  focus: false,
+                                  name: dataLink.name,
+                                  apiKey: dataLink.apiKey,
+                                  url: dataLink.url,
+                                  https: (dataLink.protocol == "https"),
+                                  port: int.parse(dataLink.port),
+                                )));
               });
             }),
         const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
