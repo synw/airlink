@@ -15,8 +15,11 @@ class AppState extends Model {
 
   Dio httpClient;
   DataLink activeDataLink;
-  Directory serverRootDirectory;
-  Directory serverUploadDirectory;
+  Directory uploadDirectory;
+  Directory rootDirectory;
+  String serverName;
+  String serverIp;
+  String serverApiKey;
   var fileServer = FileServer();
   bool serverIsConfigured = false;
   bool remoteViewActive = false;
@@ -38,44 +41,70 @@ class AppState extends Model {
     //log.debug("STATE ADL $activeDataLink");
     // server directories
     Map<String, String> initialState = await db.getInitialState();
-    serverRootDirectory = Directory(initialState["root_path"]);
-    serverUploadDirectory = Directory(initialState["upload_path"]);
+    if (initialState["root_path"] != null)
+      rootDirectory = Directory(initialState["root_path"]);
+    if (initialState["upload_path"] != null)
+      uploadDirectory = Directory(initialState["upload_path"]);
+    if (initialState["server_name"] != null)
+      serverName = initialState["server_name"];
+    if (initialState["server_api_key"] != null)
+      serverApiKey = initialState["server_api_key"];
     checkServerConfig();
     print("STATE INITIALIZED:");
     print("- Server conf: $serverIsConfigured");
-    print("- Root dir: $serverRootDirectory");
-    print("- Upload dir $serverUploadDirectory");
+    print("- Root dir: $rootDirectory");
+    print("- Upload dir $uploadDirectory");
     _readyCompleter.complete();
     notifyListeners();
   }
 
   void checkServerConfig() {
     if (!serverIsConfigured) {
-      if (serverRootDirectory != null && serverUploadDirectory != null)
+      if (rootDirectory != null && uploadDirectory != null)
         serverIsConfigured = true;
     } else
       serverIsConfigured = false;
     notifyListeners();
   }
 
-  Future<void> setServerRootDirectory(Directory directory) async {
-    serverRootDirectory = directory;
+  Future<void> setServerApiKey(String key) async {
+    serverApiKey = key;
     try {
-      db.setRootDirectory(directory.path);
+      db.setServerApiKey(key);
+      notifyListeners();
     } catch (e) {
       throw (e);
     }
-    notifyListeners();
+  }
+
+  Future<void> setServerName(String name) async {
+    serverName = name;
+    try {
+      db.setServerName(name);
+      notifyListeners();
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  Future<void> setServerRootDirectory(Directory directory) async {
+    rootDirectory = directory;
+    try {
+      db.setRootDirectory(directory.path);
+      notifyListeners();
+    } catch (e) {
+      throw (e);
+    }
   }
 
   Future<void> setServerUploadDirectory(Directory directory) async {
-    serverUploadDirectory = directory;
+    uploadDirectory = directory;
     try {
       db.setUploadDirectory(directory.path);
+      notifyListeners();
     } catch (e) {
       throw (e);
     }
-    notifyListeners();
   }
 
   Future<void> setActiveDataLinkNull() async {

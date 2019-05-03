@@ -15,16 +15,28 @@ import '../conf.dart';
 import '../models/data_link.dart';
 
 class _ConfigureServerPageState extends State<ConfigureServerPage> {
-  String ip;
-  String apiKey;
-  String name;
   QrImage qrCode;
 
   @override
   void initState() {
-    print("STATE CONF ${state.serverIsConfigured}");
-    if (state.serverIsConfigured) generateQrCode().then((_) => setState(() {}));
+    Wifi.ip.then((ip) {
+      state.serverIp = ip;
+      print("STATE CONF ${state.serverIsConfigured}");
+      if (state.serverIsConfigured)
+        generateQrCode().then((_) => setState(() {}));
+      else
+        setServerConfig();
+    });
     super.initState();
+  }
+
+  Future<void> setServerConfig() async {
+    if (state.serverApiKey == null) state.setServerApiKey(Uuid().v1());
+    if (state.serverName == null) {
+      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      state.setServerName(androidInfo.model);
+    }
   }
 
   @override
@@ -35,41 +47,74 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
             appBar: AppBar(title: const Text("Server")),
             body: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(children: <Widget>[
-                    const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
-                    state.serverIsConfigured
-                        ? Column(
-                            children: <Widget>[
-                              Container(
-                                  decoration:
-                                      BoxDecoration(color: Colors.white),
-                                  child: (qrCode != null)
-                                      ? qrCode
-                                      : const Text("")),
-                              const Padding(
-                                  padding: const EdgeInsets.only(bottom: 20.0)),
-                              Row(
+                padding: const EdgeInsets.all(15.0),
+                child: Column(children: <Widget>[
+                  const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
+                  state.serverIsConfigured
+                      ? Column(
+                          children: <Widget>[
+                            Container(
+                                decoration: BoxDecoration(color: Colors.white),
+                                child:
+                                    (qrCode != null) ? qrCode : const Text("")),
+                            const Padding(
+                                padding: const EdgeInsets.only(bottom: 20.0)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Switch(
+                                  value: state.fileServer.isRunning,
+                                  onChanged: (v) => toggleServer(context, v)
+                                      .then((_) => setState(() {})),
+                                ),
+                                const Text(" Serve files"),
+                              ],
+                            )
+                          ],
+                        )
+                      : const Text(""),
+                  const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
+                  buildPicker(
+                      context: context, folderToPick: FolderToPick.root),
+                  const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
+                  buildPicker(
+                      context: context, folderToPick: FolderToPick.upload),
+                  state.serverIsConfigured
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            const Padding(
+                                padding: const EdgeInsets.only(bottom: 15.0)),
+                            Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
-                                  Switch(
-                                    value: state.fileServer.isRunning,
-                                    onChanged: (v) => toggleServer(context, v)
-                                        .then((_) => setState(() {})),
-                                  ),
-                                  const Text(" Serve files"),
-                                ],
-                              )
-                            ],
-                          )
-                        : const Text(""),
-                    const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
-                    buildPicker(
-                        context: context, folderToPick: FolderToPick.root),
-                    const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
-                    buildPicker(
-                        context: context, folderToPick: FolderToPick.upload)
-                  ])),
+                                  const Text("Info", textScaleFactor: 1.8)
+                                ]),
+                            const Padding(
+                                padding: const EdgeInsets.only(bottom: 10.0)),
+                            FlatButton(
+                              child: Text("Name: ${state.serverName}"),
+                              onPressed: () => editServerParamDialog(
+                                  context, ServerConfigParam.name),
+                            ),
+                            const Padding(
+                                padding: const EdgeInsets.only(bottom: 10.0)),
+                            FlatButton(
+                              child: Text("Api key: ${state.serverApiKey}"),
+                              onPressed: () => editServerParamDialog(
+                                  context, ServerConfigParam.apiKey),
+                            ),
+                            const Padding(
+                                padding: const EdgeInsets.only(bottom: 10.0)),
+                            FlatButton(
+                              child: Text("Url: http://${state.serverIp}:8084"),
+                              onPressed: () => null,
+                            ),
+                          ],
+                        )
+                      : const Text("")
+                ]),
+              ),
             )));
   }
 
@@ -78,15 +123,15 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     if (folderToPick == FolderToPick.root) {
       w = [
         const Icon(Icons.file_download),
-        (state.serverRootDirectory != null)
-            ? Text("${basename(state.serverRootDirectory.path)}")
+        (state.rootDirectory != null)
+            ? Text("${basename(state.rootDirectory.path)}")
             : const Text(" Set root directory")
       ];
     } else {
       w = [
         const Icon(Icons.file_upload),
-        (state.serverUploadDirectory != null)
-            ? Text("${basename(state.serverUploadDirectory.path)}")
+        (state.uploadDirectory != null)
+            ? Text("${basename(state.uploadDirectory.path)}")
             : const Text(" Set upload directory")
       ];
     }
@@ -117,16 +162,10 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
   }
 
   Future<void> generateQrCode() async {
-    ip = await Wifi.ip;
-    var uuid = Uuid();
-    apiKey = uuid.v1();
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-    name = androidInfo.model;
     Map<String, String> dataMap = {
-      "name": name,
-      "url": ip,
-      "apiKey": apiKey,
+      "name": state.serverName,
+      "url": state.serverIp,
+      "apiKey": state.serverApiKey,
       "protocol": "http",
       "port": "8084"
     };
@@ -143,12 +182,12 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     assert(state.serverIsConfigured);
     if (!state.fileServer.isInitialized) {
       state.fileServer.init(
-          uploadDirectory: state.serverUploadDirectory,
-          rootDirectory: state.serverRootDirectory,
+          uploadDirectory: state.uploadDirectory,
+          rootDirectory: state.rootDirectory,
           dataLink: DataLink(
-              name: name,
-              url: ip,
-              apiKey: apiKey,
+              name: state.serverName,
+              url: state.serverIp,
+              apiKey: state.serverApiKey,
               protocol: "http",
               port: "8084"));
       await state.fileServer.onReady;
@@ -161,7 +200,64 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
       log.infoFlash("Server stopped");
     }
   }
+
+  void editServerParamDialog(BuildContext context, ServerConfigParam param) {
+    final nameController = TextEditingController();
+    String paramStr;
+    switch (param) {
+      case ServerConfigParam.name:
+        paramStr = "Name";
+        break;
+      case ServerConfigParam.apiKey:
+        paramStr = "Api key";
+        break;
+      default:
+        return;
+    }
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(paramStr),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+            FlatButton(
+              child: const Text("Save"),
+              onPressed: () {
+                switch (param) {
+                  case ServerConfigParam.name:
+                    state
+                        .setServerName(nameController.text)
+                        .then((_) => generateQrCode())
+                        .then((_) => setState(() {}));
+                    break;
+                  case ServerConfigParam.apiKey:
+                    state
+                        .setServerApiKey(nameController.text)
+                        .then((_) => generateQrCode())
+                        .then((_) => setState(() {}));
+                    ;
+                }
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+          content: TextField(
+            controller: nameController,
+            autofocus: true,
+          ),
+        );
+      },
+    );
+  }
 }
+
+enum ServerConfigParam { name, apiKey }
 
 enum FolderToPick { upload, root }
 

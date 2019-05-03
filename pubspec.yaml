@@ -29,7 +29,6 @@ dependencies:
   open_file: ^2.0.1+2
   flutter_downloader: ^1.1.7
   card_settings: ^1.4.1
-  sqlcool: ^2.5.0
   qrcode_reader: ^0.4.4
   qr_flutter: ^2.0.0+51
   dataview: ^0.3.1
@@ -37,8 +36,9 @@ dependencies:
   uuid: ^2.0.1
   device_info: ^0.4.0+1
   scoped_model: ^1.0.1
-  folder_picker: 
-    path: ../folder_picker
+  sqlcool: ^2.6.1
+  folder_picker: ^0.2.1
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

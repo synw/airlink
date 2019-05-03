@@ -64,7 +64,7 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
               CardSettingsHeader(label: 'Data link settings'),
               CardSettingsText(
                   focusNode: _focusNode,
-                  autofocus: focus ? true : false,
+                  autofocus: focus,
                   initialValue: name,
                   label: 'Name',
                   validator: (value) {
@@ -112,7 +112,12 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
 
 class AddDataLinkManual extends StatefulWidget {
   AddDataLinkManual(
-      {this.name, this.url, this.apiKey, this.port, this.https, this.focus});
+      {this.name,
+      this.url,
+      this.apiKey,
+      this.port = 8084,
+      this.https = false,
+      this.focus = true});
 
   final bool https;
   final String url;

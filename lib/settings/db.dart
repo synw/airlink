@@ -12,23 +12,44 @@ class DataBase {
       String q = """
     CREATE TABLE data_link (
     id INTEGER PRIMARY KEY,
-    name VARCHAR(120) NOT NULL UNIQUE,
-    url VARCHAR(255) NOT NULL,
+    name VARCHAR NOT NULL UNIQUE,
+    url VARCHAR NOT NULL,
     port INTEGER NOT NULL,
-    api_key VARCHAR(255) NOT NULL,
-    protocol VARCHAR(5) NOT NULL DEFAULT 'http',
+    api_key VARCHAR NOT NULL,
+    protocol VARCHAR NOT NULL DEFAULT 'http',
     CHECK(protocol='http' OR protocol='https')
     )""";
       String q2 = """CREATE TABLE state (
     id INTEGER PRIMARY KEY,
     active_data_link INTEGER,
-    upload_path VARCHAR(255),
-    root_path VARCHAR(255),
+    upload_path VARCHAR,
+    root_path VARCHAR,
+    server_name VARCHAR,
+    server_api_key VARCHAR,
     FOREIGN KEY (active_data_link) REFERENCES data_link(id)    
     )""";
       String q3 = "CREATE UNIQUE INDEX idx_data_link ON data_link (name)";
-      String q4 = """INSERT INTO state VALUES(1, NULL, NULL, NULL)""";
+      String q4 =
+          """INSERT INTO state VALUES(1, NULL, NULL, NULL, NULL, NULL)""";
       await db.init(path: path, queries: [q, q2, q3, q4], verbose: true);
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  Future<void> setServerApiKey(String key) async {
+    try {
+      Map<String, String> row = {"server_api_key": key};
+      db.update(table: "state", where: "id=1", row: row);
+    } catch (e) {
+      throw (e);
+    }
+  }
+
+  Future<void> setServerName(String name) async {
+    try {
+      Map<String, String> row = {"server_name": name};
+      db.update(table: "state", where: "id=1", row: row);
     } catch (e) {
       throw (e);
     }
@@ -53,14 +74,25 @@ class DataBase {
   }
 
   Future<Map<String, String>> getInitialState() async {
-    Map<String, String> result = {"root_path": null, "upload_path": null};
+    Map<String, String> result = {
+      "root_path": null,
+      "upload_path": null,
+      "server_name": null,
+      "server_api_key": null
+    };
     try {
       List<Map<String, dynamic>> res = await db.select(
-          table: "state", where: "id=1", columns: "upload_path,root_path");
+          table: "state",
+          where: "id=1",
+          columns: "upload_path,root_path,server_name,server_api_key");
       if (res[0]["upload_path"].toString() != "null")
         result["upload_path"] = res[0]["upload_path"].toString();
       if (res[0]["root_path"].toString() != "null")
         result["root_path"] = res[0]["root_path"].toString();
+      if (res[0]["server_name"].toString() != "null")
+        result["server_name"] = res[0]["server_name"].toString();
+      if (res[0]["server_api_key"].toString() != "null")
+        result["server_api_key"] = res[0]["server_api_key"].toString();
     } catch (e) {
       throw (e);
     }

@@ -1,15 +1,30 @@
 import 'package:flutter/material.dart';
 import '../conf.dart';
 import '../models/data_link.dart';
+import '../state.dart';
 import 'data_link/scan.dart';
 import 'data_link/manual.dart';
-import '../state.dart';
 
 class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     Widget w;
-    state.activeDataLink != null ? w = ListDataLinks() : w = AddDataLink();
+    state.activeDataLink != null
+        ? w = ListDataLinks()
+        : w = Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
+            FloatingActionButton(
+              child: const Icon(Icons.add),
+              onPressed: () => addDataLinkDialog(context),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 15.0),
+              child: GestureDetector(
+                child: const Text("Add a datalink"),
+                onTap: () => addDataLinkDialog(context),
+              ),
+            )
+          ]));
     return Scaffold(
       appBar: AppBar(
         title: const Text("Data links"),
@@ -95,30 +110,21 @@ class _ListDataLinksState extends State<ListDataLinks> {
   }
 }
 
-class AddDataLink extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-        padding: const EdgeInsets.all(35.0),
-        child: Center(
-          child: const AddDataLinkButtons(),
-        ));
-  }
-}
-
 void addDataLinkDialog(BuildContext context) {
   showDialog<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-            title: const Text("Add a data link"),
-            content: const AddDataLinkButtons(),
-            actions: <Widget>[
-              FlatButton(
-                child: const Text("Cancel"),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            ],
-          ));
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Add a data link"),
+          content: const AddDataLinkButtons(),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text("Cancel"),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        );
+      });
 }
 
 class AddDataLinkButtons extends StatelessWidget {
@@ -139,6 +145,7 @@ class AddDataLinkButtons extends StatelessWidget {
               ],
             ),
             onPressed: () {
+              Navigator.of(context).pop();
               scanDataLinkConfig().then((DataLink dataLink) {
                 Navigator.of(context).pop();
                 Navigator.of(context)

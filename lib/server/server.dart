@@ -41,13 +41,13 @@ class FileServer {
   }
 
   void _notFound(HttpResponse response) {
-    response.write('Not found');
+    response.write(jsonEncode({"status": "Not found"}));
     response.statusCode = HttpStatus.notFound;
     response.close();
   }
 
   void _unauthorized(HttpResponse response) {
-    response.write('Unauthorized');
+    response.write(jsonEncode({"status": "Unauthorized"}));
     response.statusCode = HttpStatus.unauthorized;
     response.close();
   }
@@ -59,12 +59,14 @@ class FileServer {
     try {
       if (request.headers.value(HttpHeaders.authorizationHeader) !=
           tokenString) {
-        print("Unauthorized");
+        log.info("Unauthorized request");
         _unauthorized(request.response);
+        return;
       }
     } catch (_) {
       log.error("Can not get authorization header");
       _unauthorized(request.response);
+      return;
     }
     // process request
     String content = await request.transform(const Utf8Decoder()).join();
