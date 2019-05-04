@@ -7,11 +7,13 @@ import 'settings/settings.dart';
 import 'settings/data_link/manual.dart';
 import 'state.dart';
 import 'server/configure.dart';
+import 'server/logs_page.dart';
 
 final routes = {
   '/file_explorer': (BuildContext context) => FileExplorerPage("/"),
   '/settings': (BuildContext context) => SettingsPage(),
   '/server_config': (BuildContext context) => ConfigureServerPage(),
+  '/logs': (BuildContext context) => LogsPage(),
   '/add_data_link_manual': (BuildContext context) => AddDataLinkManual(),
   '/dataview': (BuildContext context) =>
       DataviewPage("/", uploadTo: "http://192.168.1.2:8082/upload")

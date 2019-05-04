@@ -38,6 +38,7 @@ dependencies:
   scoped_model: ^1.0.1
   sqlcool: ^2.6.1
   folder_picker: ^0.2.1
+  audioplayer: ^0.5.2
 
 
   # The following adds the Cupertino Icons font to your application.

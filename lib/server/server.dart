@@ -2,23 +2,28 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 import '../models/data_link.dart';
+import '../models/server.dart';
 import '../log.dart';
 
 class FileServer {
-  FileServer();
-
   DataLink _dataLink;
   Directory _rootDirectory;
   Directory _uploadDirectory;
 
   bool _isInitialized = false;
   bool _isRunning = false;
+  List<ServerLog> _logs = [];
 
   Stream<HttpRequest> _server;
   StreamSubscription _serverSub;
   final Completer<Null> _readyCompleter = Completer<Null>();
+  StreamController<ServerLog> _serverLog;
+
+  Stream<ServerLog> get serverLog => _serverLog.stream;
+  List<ServerLog> get logs => _logs;
 
   Future<Null> get onReady => _readyCompleter.future;
   bool get isInitialized => _isInitialized;
@@ -40,32 +45,33 @@ class FileServer {
     });
   }
 
-  void _notFound(HttpResponse response) {
-    response.write(jsonEncode({"status": "Not found"}));
-    response.statusCode = HttpStatus.notFound;
-    response.close();
-  }
-
-  void _unauthorized(HttpResponse response) {
-    response.write(jsonEncode({"status": "Unauthorized"}));
-    response.statusCode = HttpStatus.unauthorized;
-    response.close();
+  void _unauthorized(HttpRequest request, String msg) {
+    request.response.write(jsonEncode({"Status": "Unauthorized"}));
+    request.response.statusCode = HttpStatus.unauthorized;
+    request.response.close();
+    emitServerLog(
+        logClass: LogMessageClass.warning,
+        message: msg,
+        statusCode: request.response.statusCode,
+        requestUrl: request.uri.toString());
   }
 
   void _handlePost(HttpRequest request) async {
-    print("POST REQUEST: ${request.uri.path} / ${request.headers.contentType}");
+    //print("POST REQUEST: ${request.uri.path} / ${request.headers.contentType}");
     // verify authorization
     String tokenString = "Bearer ${_dataLink.apiKey}";
     try {
       if (request.headers.value(HttpHeaders.authorizationHeader) !=
           tokenString) {
-        log.info("Unauthorized request");
-        _unauthorized(request.response);
+        String msg = "Unauthorized request";
+        log.warning(msg);
+        _unauthorized(request, msg);
         return;
       }
     } catch (_) {
-      log.error("Can not get authorization header");
-      _unauthorized(request.response);
+      String msg = "Can not get authorization header";
+      log.error(msg);
+      _unauthorized(request, msg);
       return;
     }
     // process request
@@ -83,18 +89,37 @@ class FileServer {
         : dirPath = _rootDirectory.path + path;
     Directory dir = Directory(dirPath);
     HttpResponse response = request.response;
-    if (dir == null) _notFound(response);
+    if (dir == null) {
+      response.write(jsonEncode({"Status": "Not found"}));
+      response.statusCode = HttpStatus.notFound;
+      response.close();
+      emitServerLog(
+          logClass: LogMessageClass.warning,
+          message: "Not found",
+          statusCode: response.statusCode,
+          requestUrl: path);
+    }
     response.headers.contentType =
         new ContentType("application", "json", charset: "utf-8");
     var dirListing = await getDirectoryListing(dir);
     response.statusCode = HttpStatus.ok;
     response.write(jsonEncode(dirListing));
     response.close();
+    // log
+    emitServerLog(
+        logClass: LogMessageClass.success,
+        message: "",
+        statusCode: response.statusCode,
+        requestUrl: path);
   }
 
-  void start() async {
+  Future<bool> start(BuildContext context) async {
     assert(_isInitialized);
-    if (_isRunning) log.warning("The server is already running");
+    if (_isRunning) {
+      log.warningScreen("The server is already running", context: context);
+      return false;
+    }
+    _serverLog = StreamController<ServerLog>.broadcast();
     await onReady;
     log.info("STARTING SERVER");
     _serverSub = _server.listen((request) {
@@ -105,18 +130,28 @@ class FileServer {
         default:
           request.response.statusCode = HttpStatus.methodNotAllowed;
           request.response.close();
+          emitServerLog(
+              logClass: LogMessageClass.warning,
+              message: "Method not allowed ${request.method}",
+              statusCode: request.response.statusCode,
+              requestUrl: request.uri.toString());
+          return false;
       }
     });
     _isRunning = true;
+    return true;
   }
 
-  void stop() async {
+  Future<bool> stop(BuildContext context) async {
     if (_isRunning) {
       log.info("STOPPING SERVER");
       await _serverSub.cancel();
       _isRunning = false;
+      _serverLog.close();
+      return true;
     }
-    log.warning("The server is already running");
+    log.warningScreen("The server is already running", context: context);
+    return false;
   }
 
   Future<Map<String, List<Map<String, dynamic>>>> getDirectoryListing(
@@ -139,5 +174,20 @@ class FileServer {
       }
     }
     return {"files": files, "directories": dirs};
+  }
+
+  void emitServerLog(
+      {@required LogMessageClass logClass,
+      @required String requestUrl,
+      @required String message,
+      @required int statusCode}) async {
+    ServerLog logItem = ServerLog(
+        statusCode: statusCode,
+        requestUrl: requestUrl,
+        message: message,
+        logClass: logClass);
+    log.info(logItem.toString());
+    _serverLog.sink.add(logItem);
+    _logs.add(logItem);
   }
 }

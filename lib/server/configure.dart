@@ -44,7 +44,18 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     return ScopedModel<AppState>(
         model: state,
         child: Scaffold(
-            appBar: AppBar(title: const Text("Server")),
+            appBar: AppBar(
+              title: const Text("Server"),
+              actions: <Widget>[
+                (state.serverIsConfigured && state.fileServer.isRunning)
+                    ? IconButton(
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed("/logs"),
+                        icon: const Icon(Icons.sms_failed),
+                      )
+                    : const Text("")
+              ],
+            ),
             body: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(15.0),
@@ -192,12 +203,16 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
               port: "8084"));
       await state.fileServer.onReady;
     }
-    if (start) {
-      state.fileServer.start();
-      log.infoFlash("Server started");
-    } else {
-      state.fileServer.stop();
-      log.infoFlash("Server stopped");
+    switch (start) {
+      case true:
+        state.fileServer.start(context).then((ok) {
+          if (ok) log.infoFlash("Server started");
+        });
+        break;
+      case false:
+        state.fileServer.stop(context).then((ok) {
+          if (ok) log.infoFlash("Server stoped");
+        });
     }
   }
 
