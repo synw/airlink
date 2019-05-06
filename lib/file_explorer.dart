@@ -218,7 +218,7 @@ class ExplorerListing extends StatelessWidget {
           color: Colors.lightBlue,
           icon: Icons.file_upload,
           onTap: () => upload(
-                serverUrl: state.activeDataLink.url,
+                serverUrl: state.activeDataLink.address,
                 filename: item.filename,
                 file: File(item.item.path),
                 context: context,
@@ -232,7 +232,7 @@ class ExplorerListing extends StatelessWidget {
             onTap: () {
               zipUpload(
                       directory: item,
-                      serverUrl: state.activeDataLink.url,
+                      serverUrl: state.activeDataLink.address,
                       context: context)
                   .catchError((dynamic e) {
                 throw (e);

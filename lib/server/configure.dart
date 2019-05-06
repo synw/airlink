@@ -65,6 +65,8 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
                       ? Column(
                           children: <Widget>[
                             Container(
+                                width: 320.0,
+                                height: 320.0,
                                 decoration: BoxDecoration(color: Colors.white),
                                 child:
                                     (qrCode != null) ? qrCode : const Text("")),
@@ -182,7 +184,7 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     };
     String data = const JsonEncoder.withIndent("").convert(dataMap);
     qrCode = QrImage(
-      size: 600.0,
+      size: 320.0,
       version: 8,
       data: data,
       onError: (dynamic e) => log.error("Can not generate qr code $e"),

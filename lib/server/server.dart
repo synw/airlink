@@ -47,8 +47,8 @@ class FileServer {
   }
 
   void _unauthorized(HttpRequest request, String msg) {
-    request.response.write(jsonEncode({"Status": "Unauthorized"}));
     request.response.statusCode = HttpStatus.unauthorized;
+    request.response.write(jsonEncode({"Status": "Unauthorized"}));
     request.response.close();
     emitServerLog(
         logClass: LogMessageClass.warning,
@@ -58,8 +58,8 @@ class FileServer {
   }
 
   void _notFound(HttpRequest request, String msg) {
-    request.response.write(jsonEncode({"Status": msg}));
     request.response.statusCode = HttpStatus.notFound;
+    request.response.write(jsonEncode({"Status": msg}));
     request.response.close();
     emitServerLog(
         logClass: LogMessageClass.warning,
@@ -121,6 +121,12 @@ class FileServer {
     });
   }
 
+  void upload(dynamic content) {
+    print("UPLOAD");
+    print("${content.runtimeType}");
+    print("$content");
+  }
+
   void _handlePost(HttpRequest request) async {
     log.debug(
         "POST REQUEST: ${request.uri.path} / ${request.headers.contentType}");
@@ -137,6 +143,17 @@ class FileServer {
       print("DATA $data");
     } catch (e) {
       log.error("DECODING ERROR $e");
+      _notFound(request, "Decoding error");
+      return;
+    }
+    if (!data.containsKey('path')) {
+      if (data.containsKey("file")) {
+        upload(data["file"]);
+      } else {
+        log.error("Wrong action");
+        _notFound(request, "Wrong action");
+        return;
+      }
     }
     String path = data["path"].toString();
     String dirPath;
