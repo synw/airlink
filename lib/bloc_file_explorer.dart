@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import "models/filesystem.dart";
 import "commands.dart";
 import 'conf.dart';
-import 'state.dart';
 
 class ItemsBloc {
   ItemsBloc(this.path) {

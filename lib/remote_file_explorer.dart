@@ -19,14 +19,18 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
 
   SlidableController _slidableController;
 
-  Future<void> getData() async {
+  Future<void> getData(String _remotePath) async {
     assert(state.activeDataLink != null);
-    print("GET ${state.activeDataLink.address}");
-    print("GET ${state.httpClient}");
+    log.debug("GET ${state.activeDataLink.address}");
+    log.debug("PATH $_remotePath");
     try {
-      var response = await state.httpClient.post<Map<String, dynamic>>(
+      /*var response = await state.httpClient.post<Map<String, dynamic>>(
           "${state.activeDataLink.address}/ls",
-          data: <String, dynamic>{"path": state.remotePath});
+          data: <String, dynamic>{"path": _remotePath});*/
+      FormData formData = FormData.from(<String, dynamic>{"path": _remotePath});
+      Response<Map<String, dynamic>> response = await state.httpClient
+          .post<Map<String, dynamic>>("${state.activeDataLink.address}/ls",
+              data: formData);
       setState(() => listing = RemoteDirectoryListing.fromJson(response.data));
     } on DioError catch (e) {
       setState(() {
@@ -55,7 +59,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
 
   @override
   void initState() {
-    getData();
+    getData(state.remotePath);
     super.initState();
   }
 
@@ -71,7 +75,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
           var li = state.remotePath.split("/");
           li.removeLast();
           state.remotePath = li.join("/");
-          getData();
+          getData(state.remotePath);
         },
       ));
     for (var dir in listing.directories) {
@@ -81,10 +85,11 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
             leading: const Icon(Icons.folder, color: Colors.orange),
             title: Text(dir.name)),
         onTap: () {
-          (state.remotePath != "/")
+          (state.remotePath != "/" && state.remotePath != "")
               ? state.remotePath = state.remotePath + "/" + dir.name
-              : state.remotePath = state.remotePath + dir.name;
-          getData();
+              : state.remotePath = "/" + dir.name;
+          print("REQUEST ${state.remotePath}");
+          getData(state.remotePath);
         },
       ));
     }
@@ -107,13 +112,14 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
             icon: Icons.file_download,
             onTap: () {
               log.infoFlash("Downloading file");
-              String path;
-              (state.remotePath == "/") ? path = "" : path = state.remotePath;
-              String url =
-                  state.activeDataLink.address + path + "/" + file.name;
-              print("Downloading $url");
+              String rp;
+              (state.remotePath == "/" || state.remotePath == "")
+                  ? rp = ""
+                  : rp = state.remotePath;
+              //(state.remotePath == "/") ? _path = "" : _path = state.remotePath;
+              String url = state.activeDataLink.address + rp + "/" + file.name;
               var dl = Downloader();
-              dl.download(url, path);
+              dl.download(url, path, context);
               dl.completedController.listen((_) {
                 dl.dispose();
                 try {

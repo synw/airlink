@@ -31,8 +31,6 @@ Future playBeep() async {
     final soundData = await rootBundle.load("assets/beep.mp3");
     final bytes = soundData.buffer.asUint8List();
     await file.writeAsBytes(bytes, flush: true);
-  } else {
-    throw ("Mp3 file not found");
   }
   await audioPlayer
       .play(file.path, isLocal: true)

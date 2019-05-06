@@ -145,7 +145,6 @@ class AddDataLinkButtons extends StatelessWidget {
               ],
             ),
             onPressed: () {
-              Navigator.of(context).pop();
               scanDataLinkConfig().then((DataLink dataLink) {
                 Navigator.of(context).pop();
                 Navigator.of(context)
@@ -160,6 +159,7 @@ class AddDataLinkButtons extends StatelessWidget {
                                   https: (dataLink.protocol == "https"),
                                   port: int.parse(dataLink.port),
                                 )));
+                //Navigator.of(context).pop();
               });
             }),
         const Padding(padding: const EdgeInsets.only(bottom: 15.0)),

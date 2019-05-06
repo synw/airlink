@@ -182,7 +182,7 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     };
     String data = const JsonEncoder.withIndent("").convert(dataMap);
     qrCode = QrImage(
-      size: 250.0,
+      size: 600.0,
       version: 8,
       data: data,
       onError: (dynamic e) => log.error("Can not generate qr code $e"),
@@ -201,17 +201,23 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
               apiKey: state.serverApiKey,
               protocol: "http",
               port: "8084"));
-      await state.fileServer.onReady;
     }
+    await state.fileServer.onReady;
     switch (start) {
       case true:
         state.fileServer.start(context).then((ok) {
-          if (ok) log.infoFlash("Server started");
+          if (ok) {
+            log.infoFlash("Server started");
+          } else
+            log.errorScreen("Can not start server", context: context);
         });
         break;
       case false:
         state.fileServer.stop(context).then((ok) {
-          if (ok) log.infoFlash("Server stoped");
+          if (ok) {
+            log.infoFlash("Server stoped");
+          } else
+            log.errorScreen("Can not stop server", context: context);
         });
     }
   }
@@ -256,7 +262,6 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
                         .setServerApiKey(nameController.text)
                         .then((_) => generateQrCode())
                         .then((_) => setState(() {}));
-                    ;
                 }
                 Navigator.of(context).pop(true);
               },

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
+import 'package:body_parser/body_parser.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
@@ -38,8 +39,8 @@ class FileServer {
     _uploadDirectory = uploadDirectory;
     _dataLink = dataLink;
     HttpServer.bind(_dataLink.url, int.parse(_dataLink.port))
-        .then((HttpServer server) {
-      _server = server.asBroadcastStream();
+        .then((HttpServer s) {
+      _server = s.asBroadcastStream();
       _readyCompleter.complete();
       _isInitialized = true;
     });
@@ -53,32 +54,87 @@ class FileServer {
         logClass: LogMessageClass.warning,
         message: msg,
         statusCode: request.response.statusCode,
-        requestUrl: request.uri.toString());
+        requestUrl: request.uri.path);
   }
 
-  void _handlePost(HttpRequest request) async {
-    //print("POST REQUEST: ${request.uri.path} / ${request.headers.contentType}");
-    // verify authorization
+  void _notFound(HttpRequest request, String msg) {
+    request.response.write(jsonEncode({"Status": msg}));
+    request.response.statusCode = HttpStatus.notFound;
+    request.response.close();
+    emitServerLog(
+        logClass: LogMessageClass.warning,
+        message: msg,
+        statusCode: request.response.statusCode,
+        requestUrl: request.uri.path);
+  }
+
+  bool verifyToken(HttpRequest request) {
     String tokenString = "Bearer ${_dataLink.apiKey}";
+    print("HEADERS");
+    print("${request.headers}");
     try {
       if (request.headers.value(HttpHeaders.authorizationHeader) !=
           tokenString) {
         String msg = "Unauthorized request";
         log.warning(msg);
         _unauthorized(request, msg);
-        return;
+        return false;
       }
     } catch (_) {
       String msg = "Can not get authorization header";
       log.error(msg);
       _unauthorized(request, msg);
+      return false;
+    }
+    return true;
+  }
+
+  void _handleGet(HttpRequest request) async {
+    // verify authorization
+    bool authorized = verifyToken(request);
+    if (!authorized) return;
+    // process request
+    String filePath = _rootDirectory.path + request.uri.path;
+    log.debug("REQUEST $filePath");
+
+    File file = File(filePath);
+    if (!file.existsSync()) {
+      _notFound(request, "File not found");
       return;
     }
+    log.info(request.uri.path);
+    file.openRead().pipe(request.response).then((dynamic _) {
+      log.debug("OK");
+      emitServerLog(
+          logClass: LogMessageClass.success,
+          message: "",
+          statusCode: request.response.statusCode,
+          requestUrl: request.uri.path);
+    }).catchError((dynamic e) {
+      String msg = "Can not read file ${file.path}";
+      log.error(msg);
+      emitServerLog(
+          logClass: LogMessageClass.error,
+          message: msg,
+          statusCode: request.response.statusCode,
+          requestUrl: request.uri.path);
+    });
+  }
+
+  void _handlePost(HttpRequest request) async {
+    log.debug(
+        "POST REQUEST: ${request.uri.path} / ${request.headers.contentType}");
+    // verify authorization
+    bool authorized = verifyToken(request);
+    if (!authorized) return;
     // process request
-    String content = await request.transform(const Utf8Decoder()).join();
+    //String content = await request.transform(const Utf8Decoder()).join();
+    BodyParseResult body = await parseBody(request);
+    var content = json.encode(body.body);
     Map<dynamic, dynamic> data;
     try {
       data = jsonDecode(content) as Map;
+      print("DATA $data");
     } catch (e) {
       log.error("DECODING ERROR $e");
     }
@@ -90,14 +146,8 @@ class FileServer {
     Directory dir = Directory(dirPath);
     HttpResponse response = request.response;
     if (dir == null) {
-      response.write(jsonEncode({"Status": "Not found"}));
-      response.statusCode = HttpStatus.notFound;
-      response.close();
-      emitServerLog(
-          logClass: LogMessageClass.warning,
-          message: "Not found",
-          statusCode: response.statusCode,
-          requestUrl: path);
+      _notFound(request, "Directory not found");
+      return;
     }
     response.headers.contentType =
         new ContentType("application", "json", charset: "utf-8");
@@ -123,9 +173,13 @@ class FileServer {
     await onReady;
     log.info("STARTING SERVER");
     _serverSub = _server.listen((request) {
+      log.debug("REQUEST ${request.uri.path} / ${request.headers.contentType}");
       switch (request.method) {
         case 'POST':
           _handlePost(request);
+          break;
+        case 'GET':
+          _handleGet(request);
           break;
         default:
           request.response.statusCode = HttpStatus.methodNotAllowed;
@@ -134,7 +188,7 @@ class FileServer {
               logClass: LogMessageClass.warning,
               message: "Method not allowed ${request.method}",
               statusCode: request.response.statusCode,
-              requestUrl: request.uri.toString());
+              requestUrl: request.uri.path);
           return false;
       }
     });
@@ -186,7 +240,16 @@ class FileServer {
         requestUrl: requestUrl,
         message: message,
         logClass: logClass);
-    log.info(logItem.toString());
+    switch (logItem.logClass) {
+      case LogMessageClass.success:
+        log.info(logItem.toString());
+        break;
+      case LogMessageClass.error:
+        log.error(logItem.toString());
+        break;
+      case LogMessageClass.warning:
+        log.warning(logItem.toString());
+    }
     _serverLog.sink.add(logItem);
     _logs.add(logItem);
   }

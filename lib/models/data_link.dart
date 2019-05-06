@@ -5,7 +5,7 @@ class DataLink {
       {this.id,
       @required this.name,
       @required this.url,
-      @required this.port,
+      this.port = "8084",
       @required this.apiKey,
       @required this.protocol});
 
