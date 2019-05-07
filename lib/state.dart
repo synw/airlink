@@ -27,6 +27,7 @@ class AppState extends Model {
   String remotePath = "/";
   String localPath = "/";
   List<DirectoryItem> directoryItems;
+  RemoteDirectoryListing remoteDirectoryListing;
 
   final Completer<Null> _readyCompleter = Completer<Null>();
 
@@ -63,12 +64,16 @@ class AppState extends Model {
 
   void toggleRemoteView() {
     remoteViewActive = !remoteViewActive;
-    print("REMOTE VIES $remoteViewActive");
     notifyListeners();
   }
 
   void setRemoteView(bool active) {
     remoteViewActive = active;
+    notifyListeners();
+  }
+
+  void setRemoteDirectoryListing(RemoteDirectoryListing listing) {
+    remoteDirectoryListing = listing;
     notifyListeners();
   }
 
