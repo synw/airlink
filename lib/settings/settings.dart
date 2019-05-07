@@ -71,9 +71,8 @@ class _ListDataLinksState extends State<ListDataLinks> {
             }
           },
           title: GestureDetector(
-            child: Text(dataLink.name),
-            onTap: () => deleteDataLink(context, dataLink),
-          )));
+              child: Text(dataLink.name),
+              onTap: () => deleteDataLink(context, dataLink))));
     });
     return ListView(children: w);
   }
@@ -95,12 +94,13 @@ class _ListDataLinksState extends State<ListDataLinks> {
               child: const Text("Delete"),
               color: Colors.red,
               textColor: Colors.white,
-              onPressed: () async {
+              onPressed: () {
                 Navigator.of(context).pop();
-                if (state.activeDataLink.name == dataLink.name)
-                  await state.setActiveDataLinkNull();
-                await db.deleteDataLink(dataLink);
-                setState(() {});
+                if (state.activeDataLink == dataLink)
+                  state.setActiveDataLinkNull();
+                db.deleteDataLink(dataLink).then((_) {
+                  initDataLinks().then((dl) => setState(() => dataLinks = dl));
+                });
               },
             ),
           ],

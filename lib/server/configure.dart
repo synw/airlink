@@ -66,7 +66,7 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
                           children: <Widget>[
                             Container(
                                 width: 320.0,
-                                height: 320.0,
+                                height: 300.0,
                                 decoration: BoxDecoration(color: Colors.white),
                                 child:
                                     (qrCode != null) ? qrCode : const Text("")),

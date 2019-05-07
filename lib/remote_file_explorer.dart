@@ -6,15 +6,10 @@ import 'package:dio/dio.dart';
 import 'models/filesystem.dart';
 import 'file_icons.dart';
 import 'downloader.dart';
-import 'file_explorer.dart';
 import 'state.dart';
 import 'log.dart';
 
 class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
-  _RemoteFileExplorerState(this.path);
-
-  final String path;
-
   RemoteDirectoryListing listing;
 
   SlidableController _slidableController;
@@ -33,32 +28,21 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
               data: formData);
       setState(() => listing = RemoteDirectoryListing.fromJson(response.data));
     } on DioError catch (e) {
-      setState(() {
-        state.remoteViewActive = false;
-        Navigator.of(context)
-            .pushReplacement<RemoteFileExplorer, FileExplorerPage>(
-                MaterialPageRoute(
-                    builder: (BuildContext context) => FileExplorerPage(path)));
-        String msg = "Can not connect to server: $e";
-        log.errorScreen(msg, context: context);
-      });
+      state.setRemoteView(false);
+      String msg = "Can not connect to server: $e";
+      log.errorScreen(msg, context: context);
       return false;
     } catch (e) {
-      setState(() {
-        state.remoteViewActive = false;
-        Navigator.of(context)
-            .pushReplacement<RemoteFileExplorer, FileExplorerPage>(
-                MaterialPageRoute(
-                    builder: (BuildContext context) => FileExplorerPage(path)));
-        String msg = "Can not connect to server: $e";
-        log.errorScreen(msg, context: context);
-      });
+      state.setRemoteView(false);
+      String msg = "Can not connect to server: $e";
+      log.errorScreen(msg, context: context);
       return false;
     }
   }
 
   @override
   void initState() {
+    print("INIT REMOTE VIEW");
     getData(state.remotePath);
     super.initState();
   }
@@ -119,16 +103,10 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
               //(state.remotePath == "/") ? _path = "" : _path = state.remotePath;
               String url = state.activeDataLink.address + rp + "/" + file.name;
               var dl = Downloader();
-              dl.download(url, path, context);
+              dl.download(url, state.localPath, context);
               dl.completedController.listen((_) {
                 dl.dispose();
-                try {
-                  Navigator.of(context)
-                      .pushReplacement<RemoteFileExplorer, FileExplorerPage>(
-                          MaterialPageRoute(
-                              builder: (BuildContext context) =>
-                                  FileExplorerPage(path)));
-                } catch (_) {}
+                //try {} catch (_) {}
                 log.infoFlash("Download completed");
               });
             },
@@ -150,10 +128,6 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
 }
 
 class RemoteFileExplorer extends StatefulWidget {
-  RemoteFileExplorer(this.path);
-
-  final String path;
-
   @override
-  _RemoteFileExplorerState createState() => _RemoteFileExplorerState(path);
+  _RemoteFileExplorerState createState() => _RemoteFileExplorerState();
 }

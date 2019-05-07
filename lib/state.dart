@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:dio/dio.dart';
+import "models/filesystem.dart";
 import "models/data_link.dart";
 import 'server/server.dart';
 import 'conf.dart';
@@ -24,6 +25,8 @@ class AppState extends Model {
   bool serverIsConfigured = false;
   bool remoteViewActive = false;
   String remotePath = "/";
+  String localPath = "/";
+  List<DirectoryItem> directoryItems;
 
   final Completer<Null> _readyCompleter = Completer<Null>();
 
@@ -55,6 +58,27 @@ class AppState extends Model {
     print("- Root dir: $rootDirectory");
     print("- Upload dir $uploadDirectory");
     _readyCompleter.complete();
+    notifyListeners();
+  }
+
+  void toggleRemoteView() {
+    remoteViewActive = !remoteViewActive;
+    print("REMOTE VIES $remoteViewActive");
+    notifyListeners();
+  }
+
+  void setRemoteView(bool active) {
+    remoteViewActive = active;
+    notifyListeners();
+  }
+
+  void setDirectoryListing(List<DirectoryItem> items) {
+    directoryItems = items;
+    notifyListeners();
+  }
+
+  void setLocalPath(String path) {
+    localPath = path;
     notifyListeners();
   }
 
@@ -139,7 +163,8 @@ class AppState extends Model {
       connectTimeout: 5000,
       receiveTimeout: 10000,
       headers: <String, dynamic>{
-        HttpHeaders.authorizationHeader: "Bearer ${activeDataLink.apiKey}"
+        HttpHeaders.authorizationHeader: "Bearer ${activeDataLink.apiKey}",
+        "user-agent": "Airlink"
       },
     ));
   }
