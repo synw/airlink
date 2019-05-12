@@ -1,6 +1,7 @@
 {
 	"name": "Local file server",
 	"port": "8084",
-	"apiKey": "API_KEY",
-	"protocol": "http"
+	"api_key": "API_KEY",
+	"protocol": "http",
+	"type": "server"
 }

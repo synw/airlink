@@ -43,6 +43,7 @@ type Config struct {
 	APIKey   string `json:"apiKey"`
 	Port     string `json:"port"`
 	Protocol string `json:"protocol"`
+	Type     string `json:"type"`
 }
 
 func getIPAddress() net.IP {
@@ -64,15 +65,17 @@ func getConf() (Config, error) {
 		return config, err
 	}
 	name := viper.Get("name").(string)
-	apiKey := viper.Get("apiKey").(string)
+	apiKey := viper.Get("api_key").(string)
 	port := viper.Get("port").(string)
 	protocol := viper.Get("protocol").(string)
+	t := viper.Get("type").(string)
 	config = Config{
 		Name:     name,
 		URL:      getIPAddress().String(),
 		APIKey:   apiKey,
 		Port:     port,
 		Protocol: protocol,
+		Type:     t,
 	}
 	return config, nil
 }

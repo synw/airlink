@@ -14,12 +14,7 @@ Future<DataLink> scanDataLinkConfig() async {
     //print("SCANNED $dataString");
     playBeep();
     dynamic data = json.decode(dataString);
-    dl = DataLink(
-        name: data["name"].toString(),
-        url: data["url"].toString(),
-        port: data["port"].toString(),
-        protocol: data["protocol"].toString(),
-        apiKey: data["apiKey"].toString());
+    dl = DataLink.fromJson(data);
   });
   return dl;
 }

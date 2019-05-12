@@ -16,7 +16,6 @@ class AppState extends Model {
 
   Dio httpClient;
   DataLink activeDataLink;
-  Directory uploadDirectory;
   Directory rootDirectory;
   String serverName;
   String serverIp;
@@ -47,8 +46,6 @@ class AppState extends Model {
     Map<String, String> initialState = await db.getInitialState();
     if (initialState["root_path"] != null)
       rootDirectory = Directory(initialState["root_path"]);
-    if (initialState["upload_path"] != null)
-      uploadDirectory = Directory(initialState["upload_path"]);
     if (initialState["server_name"] != null)
       serverName = initialState["server_name"];
     if (initialState["server_api_key"] != null)
@@ -57,7 +54,6 @@ class AppState extends Model {
     print("STATE INITIALIZED:");
     print("- Server conf: $serverIsConfigured");
     print("- Root dir: $rootDirectory");
-    print("- Upload dir $uploadDirectory");
     _readyCompleter.complete();
     notifyListeners();
   }
@@ -89,8 +85,7 @@ class AppState extends Model {
 
   void checkServerConfig() {
     if (!serverIsConfigured) {
-      if (rootDirectory != null && uploadDirectory != null)
-        serverIsConfigured = true;
+      if (rootDirectory != null) serverIsConfigured = true;
     } else
       serverIsConfigured = false;
     notifyListeners();
@@ -120,16 +115,6 @@ class AppState extends Model {
     rootDirectory = directory;
     try {
       db.setRootDirectory(directory.path);
-      notifyListeners();
-    } catch (e) {
-      throw (e);
-    }
-  }
-
-  Future<void> setServerUploadDirectory(Directory directory) async {
-    uploadDirectory = directory;
-    try {
-      db.setUploadDirectory(directory.path);
       notifyListeners();
     } catch (e) {
       throw (e);

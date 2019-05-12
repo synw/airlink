@@ -87,11 +87,7 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
                         )
                       : const Text(""),
                   const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
-                  buildPicker(
-                      context: context, folderToPick: FolderToPick.root),
-                  const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
-                  buildPicker(
-                      context: context, folderToPick: FolderToPick.upload),
+                  buildPicker(context: context),
                   state.serverIsConfigured
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,23 +127,13 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
             )));
   }
 
-  Widget buildPicker({BuildContext context, FolderToPick folderToPick}) {
-    var w = <Widget>[];
-    if (folderToPick == FolderToPick.root) {
-      w = [
-        const Icon(Icons.file_download),
-        (state.rootDirectory != null)
-            ? Text("${basename(state.rootDirectory.path)}")
-            : const Text(" Set root directory")
-      ];
-    } else {
-      w = [
-        const Icon(Icons.file_upload),
-        (state.uploadDirectory != null)
-            ? Text("${basename(state.uploadDirectory.path)}")
-            : const Text(" Set upload directory")
-      ];
-    }
+  Widget buildPicker({BuildContext context}) {
+    var w = <Widget>[
+      const Icon(Icons.file_download),
+      (state.rootDirectory != null)
+          ? Text("${basename(state.rootDirectory.path)}")
+          : const Text(" Set root directory")
+    ];
     return FlatButton(
         child: Row(
           children: w,
@@ -158,14 +144,7 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
             return FolderPicker(
                 rootDirectory: externalDirectory,
                 action: (BuildContext context, Directory folder) async {
-                  switch (folderToPick) {
-                    case FolderToPick.root:
-                      await state.setServerRootDirectory(folder);
-                      break;
-                    case FolderToPick.upload:
-                      await state.setServerUploadDirectory(folder);
-                      break;
-                  }
+                  await state.setServerRootDirectory(folder);
                   state.checkServerConfig();
                   if (state.serverIsConfigured)
                     generateQrCode().then((_) => setState(() {}));
@@ -195,7 +174,6 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     assert(state.serverIsConfigured);
     if (!state.fileServer.isInitialized) {
       state.fileServer.init(
-          uploadDirectory: state.uploadDirectory,
           rootDirectory: state.rootDirectory,
           dataLink: DataLink(
               name: state.serverName,
@@ -280,8 +258,6 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
 }
 
 enum ServerConfigParam { name, apiKey }
-
-enum FolderToPick { upload, root }
 
 class ConfigureServerPage extends StatefulWidget {
   @override

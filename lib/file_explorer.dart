@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:airlink/models/data_link.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:open_file/open_file.dart';
@@ -83,7 +84,8 @@ class _ExplorerListingState extends State<ExplorerListing> {
       icon: Icons.delete,
       onTap: () => _confirmDeleteDialog(context, item),
     ));
-    if (state.activeDataLink != null) {
+    if (state.activeDataLink != null &&
+        state.activeDataLink.type == DataLinkType.server) {
       if (item.item is File) {
         ic.add(IconSlideAction(
           caption: 'Upload',

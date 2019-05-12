@@ -12,7 +12,6 @@ import '../log.dart';
 class FileServer {
   DataLink _dataLink;
   Directory _rootDirectory;
-  Directory _uploadDirectory;
 
   bool _isInitialized = false;
   bool _isRunning = false;
@@ -30,13 +29,9 @@ class FileServer {
   bool get isInitialized => _isInitialized;
   bool get isRunning => _isRunning;
 
-  void init(
-      {@required DataLink dataLink,
-      @required Directory rootDirectory,
-      @required Directory uploadDirectory}) {
+  void init({@required DataLink dataLink, @required Directory rootDirectory}) {
     print("INIT SERVER AT $dataLink");
     _rootDirectory = rootDirectory;
-    _uploadDirectory = uploadDirectory;
     _dataLink = dataLink;
     HttpServer.bind(_dataLink.url, int.parse(_dataLink.port))
         .then((HttpServer s) {
