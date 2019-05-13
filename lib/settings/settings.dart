@@ -155,6 +155,7 @@ class AddDataLinkButtons extends StatelessWidget {
                                   focus: false,
                                   name: dataLink.name,
                                   apiKey: dataLink.apiKey,
+                                  type: dataLink.type,
                                   url: dataLink.url,
                                   https: (dataLink.protocol == "https"),
                                   port: int.parse(dataLink.port),

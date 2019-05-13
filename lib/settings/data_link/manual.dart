@@ -12,6 +12,7 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
       this.apiKey = "",
       this.port = 8084,
       this.https = false,
+      this.type = DataLinkType.device,
       this.focus = true});
 
   bool https;
@@ -20,6 +21,7 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
   String apiKey;
   int port;
   bool focus;
+  DataLinkType type;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final _focusNode = FocusNode();
@@ -32,6 +34,7 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
         url: url,
         apiKey: apiKey,
         protocol: protocol,
+        type: type,
         port: "$port");
     try {
       await db.upsertDataLink(dataLink: dataLink);
@@ -117,6 +120,7 @@ class AddDataLinkManual extends StatefulWidget {
       this.apiKey,
       this.port = 8084,
       this.https = false,
+      this.type = DataLinkType.device,
       this.focus = true});
 
   final bool https;
@@ -125,6 +129,7 @@ class AddDataLinkManual extends StatefulWidget {
   final String apiKey;
   final int port;
   final bool focus;
+  final DataLinkType type;
 
   @override
   _AddDataLinkManualState createState() => _AddDataLinkManualState(
@@ -133,5 +138,6 @@ class AddDataLinkManual extends StatefulWidget {
       port: port,
       apiKey: apiKey,
       https: https,
+      type: type,
       focus: focus);
 }

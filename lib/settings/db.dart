@@ -16,8 +16,10 @@ class DataBase {
     url VARCHAR NOT NULL,
     port INTEGER NOT NULL,
     api_key VARCHAR NOT NULL,
-    protocol VARCHAR NOT NULL DEFAULT 'http',
-    CHECK(protocol='http' OR protocol='https')
+    protocol VARCHAR NOT NULL DEFAULT 'http',  
+    type VARCHAR NOT NULL DEFAULT 'device',
+    CHECK(protocol='http' OR protocol='https'),
+    CHECK(type='device' OR type='server')
     )""";
       String q2 = """CREATE TABLE state (
     id INTEGER PRIMARY KEY,
@@ -167,6 +169,7 @@ class DataBase {
           row: {
             "name": dataLink.name,
             "url": dataLink.url,
+            "type": dataLink.typeToString(),
             "api_key": dataLink.apiKey,
             "port": dataLink.port,
             "protocol": dataLink.protocol

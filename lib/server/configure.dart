@@ -157,14 +157,15 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     Map<String, String> dataMap = {
       "name": state.serverName,
       "url": state.serverIp,
-      "apiKey": state.serverApiKey,
+      "type": "device",
+      "api_key": state.serverApiKey,
       "protocol": "http",
       "port": "8084"
     };
     String data = const JsonEncoder.withIndent("").convert(dataMap);
     qrCode = QrImage(
       size: 320.0,
-      version: 8,
+      version: 6,
       data: data,
       onError: (dynamic e) => log.error("Can not generate qr code $e"),
     );

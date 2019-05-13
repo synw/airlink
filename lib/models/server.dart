@@ -34,8 +34,7 @@ class ServerLog {
       default:
     }
     if (requestUrl == "") requestUrl = "/";
-    String msgHeader = "$requestUrl $statusCode $msgClass";
-    String msg = "$msgHeader $date $message";
+    String msg = " $date $statusCode $msgClass $requestUrl $message";
     return msg;
   }
 }

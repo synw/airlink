@@ -41,6 +41,18 @@ class DataLink {
     return "$id $name : $address / $apiKey";
   }
 
+  String typeToString() {
+    String str;
+    switch (this.type) {
+      case DataLinkType.server:
+        str = "server";
+        break;
+      default:
+        str = "device";
+    }
+    return str;
+  }
+
   DataLinkType _getTypeFromString(String strType) {
     DataLinkType t;
     switch (strType) {

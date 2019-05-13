@@ -40,7 +40,7 @@ type DirectoryListing struct {
 type Config struct {
 	Name     string `json:"name"`
 	URL      string `json:"url"`
-	APIKey   string `json:"apiKey"`
+	APIKey   string `json:"api_key"`
 	Port     string `json:"port"`
 	Protocol string `json:"protocol"`
 	Type     string `json:"type"`
@@ -168,12 +168,13 @@ func main() {
 
 	e.Static("/", "static")
 	e.POST("/ls", func(c echo.Context) error {
-		dirpath := c.FormValue("path")
-		p := filepath.Join("static", path.Clean("/"+dirpath))
+		dirPath := c.FormValue("path")
+		p := filepath.Join("static", path.Clean("/"+dirPath))
 
 		listing, err := readDir(p)
 		if err != nil {
-			fmt.Println("Can not read dir")
+			fmt.Println("Can not read dir " + dirPath)
+			fmt.Println(err.Error())
 		}
 
 		return c.JSON(http.StatusOK, listing)
