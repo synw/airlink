@@ -28,7 +28,6 @@ class Downloader {
     await FlutterDownloader.loadTasks().catchError((dynamic e) {
       log.errorScreen("Can not download file", context: context);
     });
-    ;
     callback = FlutterDownloader.registerCallback(
         (String id, DownloadTaskStatus status, int progress) async {
       if (status == DownloadTaskStatus.complete) {

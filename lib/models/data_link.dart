@@ -26,9 +26,9 @@ class DataLink {
       : this.name = data["name"].toString(),
         this.url = data["url"].toString(),
         this.id = int.tryParse(data["id"].toString()),
-        this.port = data["port"].toString(),
+        this.port = data["port"].toString() ?? "8084",
         this.apiKey = data["api_key"].toString(),
-        this.protocol = data["protocol"].toString() {
+        this.protocol = data["protocol"].toString() ?? "http" {
     type = _getTypeFromString(data["type"].toString());
   }
 

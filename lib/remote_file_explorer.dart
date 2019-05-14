@@ -15,15 +15,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
 
   @override
   void initState() {
-    Future.delayed(
-        Duration.zero,
-        () => getData(state.remotePath, context).catchError((dynamic e) {
-              if (context == null) {
-                log.warningFlash("Can not get data $e");
-              } else {
-                log.errorScreen("Can not get data $e", context: context);
-              }
-            }));
+    Future.delayed(Duration.zero, () => getData(state.remotePath, context));
     super.initState();
   }
 
@@ -126,13 +118,13 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
       state.setRemoteDirectoryListing(
           RemoteDirectoryListing.fromJson(response.data));
     } on DioError catch (e) {
-      state.setRemoteView(false);
+      state.remoteViewActive = false;
       String msg = "Can not connect to server: $e";
-      throw (msg);
+      log.errorScreen(msg, context: context);
     } catch (e) {
-      state.setRemoteView(false);
+      state.remoteViewActive = false;
       String msg = "Can not connect to server: $e";
-      throw (msg);
+      log.errorScreen(msg, context: context);
     }
   }
 }

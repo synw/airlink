@@ -158,7 +158,9 @@ class AddDataLinkButtons extends StatelessWidget {
                                   type: dataLink.type,
                                   url: dataLink.url,
                                   https: (dataLink.protocol == "https"),
-                                  port: int.parse(dataLink.port),
+                                  port:
+                                      int.tryParse(dataLink.port.toString()) ??
+                                          8084,
                                 )));
                 //Navigator.of(context).pop();
               });

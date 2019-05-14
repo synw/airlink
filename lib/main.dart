@@ -29,8 +29,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
-void main() async {
-  initConf();
-  state.init();
-  runApp(MyApp());
+void main() {
+  initConf().then((_) {
+    state = AppState();
+    runApp(MyApp());
+    state.init();
+  });
 }

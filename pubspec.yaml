@@ -24,22 +24,24 @@ dependencies:
   dio: ^2.0.20
   archive: ^2.0.8
   err: ^0.7.2
-  path_provider: ^0.5.0+1
-  webview_flutter: ^0.3.5+4
+  path_provider: ^1.1.0
+  #webview_flutter: ^0.3.5+4
   open_file: ^2.0.1+2
   flutter_downloader: ^1.1.7
   card_settings: ^1.4.1
   qrcode_reader: ^0.4.4
   qr_flutter: ^2.0.0+51
-  dataview: ^0.3.1
   wifi: ^0.1.5
   uuid: ^2.0.1
   device_info: ^0.4.0+1
   scoped_model: ^1.0.1
-  sqlcool: ^2.6.1
   folder_picker: ^0.2.1
   audioplayer: ^0.5.2
   body_parser: ^1.1.1
+  sqlcool:
+    path: ../sqlcool
+  persistent_state:
+    path: ../persistent_state
 
 
   # The following adds the Cupertino Icons font to your application.

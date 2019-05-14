@@ -9,6 +9,14 @@ class _FileExplorerPageState extends State<FileExplorerPage> {
   final _addDirController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () {
+      if (state.page != "/file_explorer") state.navigate(context, state.page);
+    });
+  }
+
+  @override
   void dispose() {
     _addDirController.dispose();
     super.dispose();
@@ -27,14 +35,12 @@ class _FileExplorerPageState extends State<FileExplorerPage> {
                   IconButton(
                     icon: const Icon(Icons.speaker_phone, size: 20.0),
                     tooltip: 'Server',
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed("/server_config"),
+                    onPressed: () => state.navigate(context, "/server_config"),
                   ),
                   IconButton(
                     icon: const Icon(Icons.settings, size: 20.0),
                     tooltip: 'Settings',
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed("/settings"),
+                    onPressed: () => state.navigate(context, "/settings"),
                   ),
                   IconButton(
                     icon: const Icon(Icons.create_new_folder),

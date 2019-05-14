@@ -2,44 +2,41 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqlcool/sqlcool.dart';
-import "../models/data_link.dart";
+import "models/data_link.dart";
 
 class DataBase {
   final db = Db();
 
+  List<DbTable> schema() {
+    DbTable dataLink = DbTable("data_link")
+      ..varchar("name")
+      ..varchar("url")
+      ..integer("port", defaultValue: 8084)
+      ..varchar("api_key")
+      ..varchar("protocol", check: 'protocol="http" OR protocol="https"')
+      ..varchar("type", check: 'type="device" OR type="server"')
+      ..index("name");
+    DbTable state = DbTable("state")
+      ..varchar("root_path", nullable: true)
+      ..varchar("server_name", nullable: true)
+      ..varchar("local_path", defaultValue: '"/"')
+      ..varchar("api_key", nullable: true)
+      ..varchar("page", nullable: true)
+      ..foreignKey("active_data_link", reference: "data_link", nullable: true);
+    return <DbTable>[dataLink, state];
+  }
+
   Future<void> init({@required String path}) async {
     try {
-      String q = """
-    CREATE TABLE data_link (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR NOT NULL UNIQUE,
-    url VARCHAR NOT NULL,
-    port INTEGER NOT NULL,
-    api_key VARCHAR NOT NULL,
-    protocol VARCHAR NOT NULL DEFAULT 'http',  
-    type VARCHAR NOT NULL DEFAULT 'device',
-    CHECK(protocol='http' OR protocol='https'),
-    CHECK(type='device' OR type='server')
-    )""";
-      String q2 = """CREATE TABLE state (
-    id INTEGER PRIMARY KEY,
-    active_data_link INTEGER,
-    upload_path VARCHAR,
-    root_path VARCHAR,
-    server_name VARCHAR,
-    server_api_key VARCHAR,
-    FOREIGN KEY (active_data_link) REFERENCES data_link(id)    
-    )""";
-      String q3 = "CREATE UNIQUE INDEX idx_data_link ON data_link (name)";
-      String q4 =
-          """INSERT INTO state VALUES(1, NULL, NULL, NULL, NULL, NULL)""";
-      await db.init(path: path, queries: [q, q2, q3, q4], verbose: true);
+      String q4 = """INSERT INTO state(id) VALUES(1)""";
+      await db.init(path: path, schema: schema(), queries: [q4], verbose: true);
+      assert(db.schema != null);
     } catch (e) {
       throw (e);
     }
   }
 
-  Future<void> setServerApiKey(String key) async {
+  /*Future<void> setServerApiKey(String key) async {
     try {
       Map<String, String> row = {"server_api_key": key};
       db.update(table: "state", where: "id=1", row: row);
@@ -99,7 +96,7 @@ class DataBase {
       throw (e);
     }
     return result;
-  }
+  }*/
 
   Future<DataLink> getDataLink(int id) async {
     DataLink dl;

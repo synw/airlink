@@ -15,7 +15,7 @@ class FileServer {
 
   bool _isInitialized = false;
   bool _isRunning = false;
-  List<ServerLog> _logs = [];
+  final List<ServerLog> _logs = [];
 
   Stream<HttpRequest> _server;
   StreamSubscription _serverSub;

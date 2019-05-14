@@ -28,7 +28,7 @@ class _ExplorerListingState extends State<ExplorerListing> {
         onTap: () {
           var li = state.localPath.split("/");
           li.removeLast();
-          state.setLocalPath(li.join("/"));
+          state.localPath = li.join("/");
           lsDir();
         },
       ));
@@ -67,7 +67,7 @@ class _ExplorerListingState extends State<ExplorerListing> {
           (state.localPath == "/")
               ? p = state.localPath + item.filename
               : p = state.localPath + "/" + item.filename;
-          state.setLocalPath(p);
+          state.localPath = p;
           lsDir();
         } else {
           OpenFile.open(item.path);

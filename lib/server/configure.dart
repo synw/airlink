@@ -21,22 +21,26 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
   void initState() {
     Wifi.ip.then((ip) {
       state.serverIp = ip;
-      print("STATE CONF ${state.serverIsConfigured}");
+      initServerConfig();
+      print("Server is configured: ${state.serverIsConfigured}");
       if (state.serverIsConfigured)
         generateQrCode().then((_) => setState(() {}));
-      else
-        setServerConfig();
+      state.store.describe();
     });
     super.initState();
   }
 
-  Future<void> setServerConfig() async {
-    if (state.serverApiKey == null) state.setServerApiKey(Uuid().v1());
+  Future<void> initServerConfig() async {
+    log.debug("NAME: ${state.serverName} ${state.serverName.runtimeType}");
+    log.debug("API KEY: ${state.serverApiKey}");
+    state.serverApiKey = state.serverApiKey ?? Uuid().v1();
     if (state.serverName == null) {
       DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      state.setServerName(androidInfo.model);
+      state.serverName = androidInfo.model;
     }
+    log.debug("NAME: ${state.serverName}");
+    log.debug("API KEY: ${state.serverApiKey}");
   }
 
   @override
@@ -61,31 +65,32 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
                 padding: const EdgeInsets.all(15.0),
                 child: Column(children: <Widget>[
                   const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
-                  state.serverIsConfigured
-                      ? Column(
-                          children: <Widget>[
-                            Container(
-                                width: 320.0,
-                                height: 300.0,
-                                decoration: BoxDecoration(color: Colors.white),
-                                child:
-                                    (qrCode != null) ? qrCode : const Text("")),
-                            const Padding(
-                                padding: const EdgeInsets.only(bottom: 20.0)),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Switch(
+                  Column(
+                    children: <Widget>[
+                      state.serverIsConfigured
+                          ? Container(
+                              width: 320.0,
+                              height: 300.0,
+                              decoration: BoxDecoration(color: Colors.white),
+                              child: (qrCode != null) ? qrCode : const Text(""))
+                          : const Text(""),
+                      const Padding(
+                          padding: const EdgeInsets.only(bottom: 20.0)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          state.serverIsConfigured
+                              ? Switch(
                                   value: state.fileServer.isRunning,
                                   onChanged: (v) => toggleServer(context, v)
                                       .then((_) => setState(() {})),
-                                ),
-                                const Text(" Serve files"),
-                              ],
-                            )
-                          ],
-                        )
-                      : const Text(""),
+                                )
+                              : const Text("Configure the shared directory"),
+                          const Text(" Serve files"),
+                        ],
+                      )
+                    ],
+                  ),
                   const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
                   buildPicker(context: context),
                   state.serverIsConfigured
@@ -143,9 +148,11 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
               MaterialPageRoute(builder: (BuildContext context) {
             return FolderPicker(
                 rootDirectory: externalDirectory,
-                action: (BuildContext context, Directory folder) async {
-                  await state.setServerRootDirectory(folder);
+                action: (BuildContext context, Directory folder) {
+                  state.rootDirectory = folder;
                   state.checkServerConfig();
+                  state.store.describe();
+
                   if (state.serverIsConfigured)
                     generateQrCode().then((_) => setState(() {}));
                 });
@@ -157,15 +164,12 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     Map<String, String> dataMap = {
       "name": state.serverName,
       "url": state.serverIp,
-      "type": "device",
       "api_key": state.serverApiKey,
-      "protocol": "http",
-      "port": "8084"
     };
     String data = const JsonEncoder.withIndent("").convert(dataMap);
     qrCode = QrImage(
       size: 320.0,
-      version: 6,
+      version: 5,
       data: data,
       onError: (dynamic e) => log.error("Can not generate qr code $e"),
     );
@@ -225,7 +229,7 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
             FlatButton(
               child: const Text("Cancel"),
               onPressed: () {
-                Navigator.of(context).pop(true);
+                Navigator.of(context).pop();
               },
             ),
             FlatButton(
@@ -233,16 +237,12 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
               onPressed: () {
                 switch (param) {
                   case ServerConfigParam.name:
-                    state
-                        .setServerName(nameController.text)
-                        .then((_) => generateQrCode())
-                        .then((_) => setState(() {}));
+                    state.serverName = nameController.text;
+                    generateQrCode().then((_) => setState(() {}));
                     break;
                   case ServerConfigParam.apiKey:
-                    state
-                        .setServerApiKey(nameController.text)
-                        .then((_) => generateQrCode())
-                        .then((_) => setState(() {}));
+                    state.serverApiKey = nameController.text;
+                    generateQrCode().then((_) => setState(() {}));
                 }
                 Navigator.of(context).pop(true);
               },
