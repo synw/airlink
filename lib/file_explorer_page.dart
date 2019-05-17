@@ -8,13 +8,13 @@ import 'state.dart';
 class _FileExplorerPageState extends State<FileExplorerPage> {
   final _addDirController = TextEditingController();
 
-  @override
+  /*@override
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () {
       if (state.page != "/file_explorer") state.navigate(context, state.page);
     });
-  }
+  }*/
 
   @override
   void dispose() {

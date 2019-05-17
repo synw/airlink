@@ -17,16 +17,34 @@ import '../models/data_link.dart';
 class _ConfigureServerPageState extends State<ConfigureServerPage> {
   QrImage qrCode;
 
+  Future<void> initServer() async {
+    String ip;
+    try {
+      ip = await Wifi.ip;
+    } catch (e) {
+      log.errorFlash("Can not get device's ip address. Please check the " +
+          "internet the connection");
+      log.error("$e");
+      return;
+    }
+    if (ip == null) {
+      log.errorFlash("Can not get device's ip address. Please check the " +
+          "internet the connection");
+      return;
+    }
+    state.serverIp = ip;
+    await initServerConfig();
+    state.store.describe();
+    state.checkServerConfig();
+    print("-----------");
+    state.store.describe();
+    print("Server is configured: ${state.serverIsConfigured}");
+    if (state.serverIsConfigured) generateQrCode().then((_) => setState(() {}));
+  }
+
   @override
   void initState() {
-    Wifi.ip.then((ip) {
-      state.serverIp = ip;
-      initServerConfig();
-      print("Server is configured: ${state.serverIsConfigured}");
-      if (state.serverIsConfigured)
-        generateQrCode().then((_) => setState(() {}));
-      state.store.describe();
-    });
+    initServer();
     super.initState();
   }
 
@@ -80,32 +98,33 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           state.serverIsConfigured
-                              ? Switch(
-                                  value: state.fileServer.isRunning,
-                                  onChanged: (v) => toggleServer(context, v)
-                                      .then((_) => setState(() {})),
-                                )
+                              ? Row(children: <Widget>[
+                                  Switch(
+                                    value: state.fileServer.isRunning,
+                                    onChanged: (v) => toggleServer(context, v)
+                                        .then((_) => setState(() {})),
+                                  ),
+                                  const Text(" Serve files")
+                                ])
                               : const Text("Configure the shared directory"),
-                          const Text(" Serve files"),
+                          const Text(""),
                         ],
                       )
                     ],
                   ),
-                  const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
-                  buildPicker(context: context),
+                  const Padding(padding: EdgeInsets.only(bottom: 15.0)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      buildPicker(context: context),
+                    ],
+                  ),
                   state.serverIsConfigured
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             const Padding(
                                 padding: const EdgeInsets.only(bottom: 15.0)),
-                            Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  const Text("Info", textScaleFactor: 1.8)
-                                ]),
-                            const Padding(
-                                padding: const EdgeInsets.only(bottom: 10.0)),
                             FlatButton(
                               child: Text("Name: ${state.serverName}"),
                               onPressed: () => editServerParamDialog(
@@ -137,7 +156,7 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
       const Icon(Icons.file_download),
       (state.rootDirectory != null)
           ? Text("${basename(state.rootDirectory.path)}")
-          : const Text(" Set root directory")
+          : const Text(" Set the shared directory")
     ];
     return FlatButton(
         child: Row(
@@ -152,7 +171,6 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
                   state.rootDirectory = folder;
                   state.checkServerConfig();
                   state.store.describe();
-
                   if (state.serverIsConfigured)
                     generateQrCode().then((_) => setState(() {}));
                 });
@@ -161,6 +179,7 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
   }
 
   Future<void> generateQrCode() async {
+    print("GENERATING QR CODE");
     Map<String, String> dataMap = {
       "name": state.serverName,
       "url": state.serverIp,

@@ -87,7 +87,7 @@ class AppState extends Model {
 
   void navigate(BuildContext context, String route) {
     Navigator.of(context).pushNamed(route);
-    store.mutate("page", route);
+    //store.mutate("page", route);
   }
 
   void navigateReplacement(BuildContext context, String route) {
@@ -110,11 +110,11 @@ class AppState extends Model {
   }
 
   void checkServerConfig() {
-    if (!serverIsConfigured) {
-      if (rootDirectory != null &&
-          serverName != null &&
-          serverIp != null &&
-          serverApiKey != null) serverIsConfigured = true;
+    if (rootDirectory != null &&
+        serverName != null &&
+        serverIp != null &&
+        serverApiKey != null) {
+      serverIsConfigured = true;
     } else
       serverIsConfigured = false;
     notifyListeners();

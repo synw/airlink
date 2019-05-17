@@ -23,9 +23,7 @@ dependencies:
   filesize: ^1.0.1
   dio: ^2.0.20
   archive: ^2.0.8
-  err: ^0.7.2
   path_provider: ^1.1.0
-  #webview_flutter: ^0.3.5+4
   open_file: ^2.0.1+2
   flutter_downloader: ^1.1.7
   card_settings: ^1.4.1
@@ -38,10 +36,9 @@ dependencies:
   folder_picker: ^0.2.1
   audioplayer: ^0.5.2
   body_parser: ^1.1.1
-  sqlcool:
-    path: ../sqlcool
-  persistent_state:
-    path: ../persistent_state
+  err: ^0.7.3
+  sqlcool: ^2.8.1
+  persistent_state: ^0.1.0
 
 
   # The following adds the Cupertino Icons font to your application.

@@ -15,7 +15,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
 
   @override
   void initState() {
-    Future.delayed(Duration.zero, () => getData(state.remotePath, context));
+    getData(state.remotePath);
     super.initState();
   }
 
@@ -31,7 +31,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
           var li = state.remotePath.split("/");
           li.removeLast();
           state.remotePath = li.join("/");
-          getData(state.remotePath, context);
+          getData(state.remotePath);
         },
       ));
     for (var dir in state.remoteDirectoryListing.directories) {
@@ -47,7 +47,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
               : p = "/" + dir.name;
           state.remotePath = p;
           print("REQUEST ${state.remotePath}");
-          getData(state.remotePath, context);
+          getData(state.remotePath);
         },
       ));
     }
@@ -102,7 +102,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
     return w;
   }
 
-  Future<void> getData(String _remotePath, BuildContext context) async {
+  Future<void> getData(String _remotePath) async {
     assert(state.activeDataLink != null);
     assert(state.httpClient != null);
     log.debug("GET ${state.activeDataLink.address}");
@@ -120,11 +120,11 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
     } on DioError catch (e) {
       state.remoteViewActive = false;
       String msg = "Can not connect to server: $e";
-      log.errorScreen(msg, context: context);
+      log.errorFlash(msg);
     } catch (e) {
       state.remoteViewActive = false;
       String msg = "Can not connect to server: $e";
-      log.errorScreen(msg, context: context);
+      log.errorFlash(msg);
     }
   }
 }
