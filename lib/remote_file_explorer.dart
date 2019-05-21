@@ -15,7 +15,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
 
   @override
   void initState() {
-    getData(state.remotePath);
+    getData();
     super.initState();
   }
 
@@ -31,7 +31,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
           var li = state.remotePath.split("/");
           li.removeLast();
           state.remotePath = li.join("/");
-          getData(state.remotePath);
+          getData();
         },
       ));
     for (var dir in state.remoteDirectoryListing.directories) {
@@ -46,8 +46,8 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
               ? p = state.remotePath + "/" + dir.name
               : p = "/" + dir.name;
           state.remotePath = p;
-          print("REQUEST ${state.remotePath}");
-          getData(state.remotePath);
+          //print("REQUEST ${state.remotePath}");
+          getData();
         },
       ));
     }
@@ -102,7 +102,17 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
     return w;
   }
 
-  Future<void> getData(String _remotePath) async {
+  Future<void> getData() async {
+    dynamic err = await fetchData(state.remotePath);
+    if (err != null) {
+      String msg = "Can not connect to server: $err";
+      log.errorFlash(msg);
+      state.remoteViewActive = false;
+      Navigator.of(context).pushReplacementNamed("/file_explorer");
+    }
+  }
+
+  Future<dynamic> fetchData(String _remotePath) async {
     assert(state.activeDataLink != null);
     assert(state.httpClient != null);
     log.debug("GET ${state.activeDataLink.address}");
@@ -118,14 +128,11 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
       state.setRemoteDirectoryListing(
           RemoteDirectoryListing.fromJson(response.data));
     } on DioError catch (e) {
-      state.remoteViewActive = false;
-      String msg = "Can not connect to server: $e";
-      log.errorFlash(msg);
+      return e;
     } catch (e) {
-      state.remoteViewActive = false;
-      String msg = "Can not connect to server: $e";
-      log.errorFlash(msg);
+      return e;
     }
+    return null;
   }
 }
 

@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
 
 void main() {
   initConf().then((_) {
-    state = AppState();
+    state = AppState(verbose: true);
     runApp(MyApp());
     state.init();
   });

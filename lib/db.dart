@@ -9,7 +9,7 @@ class DataBase {
 
   List<DbTable> schema() {
     DbTable dataLink = DbTable("data_link")
-      ..varchar("name")
+      ..varchar("name", unique: true)
       ..varchar("url")
       ..integer("port", defaultValue: 8084)
       ..varchar("api_key")

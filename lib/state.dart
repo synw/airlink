@@ -13,11 +13,13 @@ import 'log.dart';
 AppState state;
 
 class AppState extends Model {
-  AppState() {
+  AppState({this.verbose = false}) {
     assert(db.db.isReady);
     store = PersistentState(db: db.db, table: "state", verbose: true);
     store.init();
   }
+
+  final bool verbose;
 
   Dio httpClient;
   DataLink activeDataLink;
@@ -37,19 +39,19 @@ class AppState extends Model {
   String get serverName => store.select("server_name");
   set serverName(String value) {
     store.mutate("server_name", value);
-    notifyListeners();
+    _notify("set server name to $value");
   }
 
   String get serverApiKey => store.select("api_key");
   set serverApiKey(String value) {
     store.mutate("api_key", value);
-    notifyListeners();
+    _notify("set api key to $value");
   }
 
   String get localPath => store.select("local_path");
   set localPath(String value) {
     store.mutate("local_path", value);
-    notifyListeners();
+    _notify("set local path to $value");
   }
 
   String get page => _getPage();
@@ -57,7 +59,7 @@ class AppState extends Model {
   Directory get rootDirectory => _getRootDirectory();
   set rootDirectory(Directory directory) {
     store.mutate("root_path", directory.path);
-    notifyListeners();
+    _notify("set root path to ${directory.path}");
   }
 
   Future<void> init() async {
@@ -78,7 +80,7 @@ class AppState extends Model {
     print("- Server conf: $serverIsConfigured");
     print("- Root dir: $rootDirectory");
     _readyCompleter.complete();
-    notifyListeners();
+    _notify("init state");
   }
 
   void navigate(BuildContext context, String route) {
@@ -93,16 +95,17 @@ class AppState extends Model {
 
   void toggleRemoteView() {
     remoteViewActive = !remoteViewActive;
+    _notify("toggle remote view active to $remoteViewActive");
   }
 
   void setRemoteDirectoryListing(RemoteDirectoryListing listing) {
     remoteDirectoryListing = listing;
-    notifyListeners();
+    _notify("set remote directory listing: $listing");
   }
 
   void setDirectoryListing(List<DirectoryItem> items) {
     directoryItems = items;
-    notifyListeners();
+    _notify("set directory listing: $items");
   }
 
   void checkServerConfig() {
@@ -113,12 +116,12 @@ class AppState extends Model {
       serverIsConfigured = true;
     } else
       serverIsConfigured = false;
-    notifyListeners();
+    _notify("check server config");
   }
 
   Future<void> setActiveDataLinkNull() async {
     store.mutate("active_data_link", "NULL");
-    notifyListeners();
+    _notify("set active data link to null");
   }
 
   Future<void> setActiveDataLink(
@@ -138,7 +141,7 @@ class AppState extends Model {
       throw ('Can not update persistant state $e');
     }
     log.debug("STATE active dl SET: $activeDataLink");
-    notifyListeners();
+    _notify("set active data link to $activeDataLink");
   }
 
   Dio _getHttpClient() {
@@ -151,6 +154,11 @@ class AppState extends Model {
         "user-agent": "Airlink"
       },
     ));
+  }
+
+  void _notify(String msg) {
+    if (verbose) log.debug("STATE CHANGE: $msg");
+    notifyListeners();
   }
 
   @override
