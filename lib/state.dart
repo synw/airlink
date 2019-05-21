@@ -15,7 +15,7 @@ AppState state;
 class AppState extends Model {
   AppState() {
     assert(db.db.isReady);
-    store = PersistentState(db: db.db, verbose: true);
+    store = PersistentState(db: db.db, table: "state", verbose: true);
     store.init();
   }
 
@@ -55,7 +55,6 @@ class AppState extends Model {
   String get page => _getPage();
 
   Directory get rootDirectory => _getRootDirectory();
-
   set rootDirectory(Directory directory) {
     store.mutate("root_path", directory.path);
     notifyListeners();
@@ -64,13 +63,10 @@ class AppState extends Model {
   Future<void> init() async {
     await store.onReady;
     // active data link
+    activeDataLink = await db.getActiveDataLink();
     //int activeDataLinkId = await db.getActiveDataLinkId();
-    int activeDataLinkId = await db.getActiveDataLinkId();
-    //print("ACTIVE ID $activeDataLinkId");
-    if (activeDataLinkId != null) {
-      activeDataLink = await db.getDataLink(activeDataLinkId);
-      httpClient = _getHttpClient();
-    }
+    print("ACTIVE DL $activeDataLink");
+    if (activeDataLink != null) httpClient = _getHttpClient();
     //log.debug("STATE ADL $activeDataLink");
     // server directories
     //String rootDirectoryStr = store.select("root_directory");
@@ -121,12 +117,7 @@ class AppState extends Model {
   }
 
   Future<void> setActiveDataLinkNull() async {
-    try {
-      await db.setActiveDataLinkStateNull();
-      activeDataLink = null;
-    } catch (e) {
-      throw (e);
-    }
+    store.mutate("active_data_link", "NULL");
     notifyListeners();
   }
 
@@ -138,9 +129,13 @@ class AppState extends Model {
     httpClient = _getHttpClient();
     // persist
     try {
-      await db.updateActiveDataLinkState(dataLink: dataLink);
+      // data
+      db.upsertDataLink(dataLink: dataLink);
+      // state
+      int id = await db.getActiveDataLinkId(dataLink.name);
+      store.mutate("active_data_link", id.toString());
     } catch (e) {
-      throw ('Can not update persistant state');
+      throw ('Can not update persistant state $e');
     }
     log.debug("STATE active dl SET: $activeDataLink");
     notifyListeners();

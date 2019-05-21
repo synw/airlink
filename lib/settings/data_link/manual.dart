@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:card_settings/card_settings.dart';
-import '../../conf.dart';
 import '../../models/data_link.dart';
 import '../../state.dart';
 import '../../log.dart';
@@ -36,21 +35,12 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
         protocol: protocol,
         type: type,
         port: "$port");
-    try {
-      await db.upsertDataLink(dataLink: dataLink);
-    } catch (e) {
-      log.errorScreen("Can not upsert data link", context: context);
-      throw (e);
-    }
     // update persistant state
-    log.debug("ACTIVE DL ${state.activeDataLink}");
-    if (state.activeDataLink == null) {
-      try {
-        await state.setActiveDataLink(context: context, dataLink: dataLink);
-      } catch (e) {
-        log.errorScreen("Can not configure state", context: context);
-        throw (e);
-      }
+    try {
+      await state.setActiveDataLink(context: context, dataLink: dataLink);
+    } catch (e) {
+      log.errorScreen("Can not update active datalink $e", context: context);
+      throw (e);
     }
   }
 

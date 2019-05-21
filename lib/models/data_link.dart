@@ -38,6 +38,7 @@ class DataLink {
 
   @override
   String toString() {
+    //String _id = int.tryParse(id) ?? "";
     return "$id $name : $address / $apiKey";
   }
 

@@ -19,7 +19,7 @@ class DataBase {
     DbTable state = DbTable("state")
       ..varchar("root_path", nullable: true)
       ..varchar("server_name", nullable: true)
-      ..varchar("local_path", defaultValue: '"/"')
+      ..varchar("local_path", defaultValue: '/')
       ..varchar("api_key", nullable: true)
       ..varchar("page", nullable: true)
       ..foreignKey("active_data_link", reference: "data_link", nullable: true);
@@ -36,86 +36,30 @@ class DataBase {
     }
   }
 
-  /*Future<void> setServerApiKey(String key) async {
-    try {
-      Map<String, String> row = {"server_api_key": key};
-      db.update(table: "state", where: "id=1", row: row);
-    } catch (e) {
-      throw (e);
-    }
-  }
-
-  Future<void> setServerName(String name) async {
-    try {
-      Map<String, String> row = {"server_name": name};
-      db.update(table: "state", where: "id=1", row: row);
-    } catch (e) {
-      throw (e);
-    }
-  }
-
-  Future<void> setRootDirectory(String dirPath) async {
-    try {
-      Map<String, String> row = {"root_path": dirPath};
-      db.update(table: "state", where: "id=1", row: row);
-    } catch (e) {
-      throw (e);
-    }
-  }
-
-  Future<void> setUploadDirectory(String dirPath) async {
-    try {
-      Map<String, String> row = {"upload_path": dirPath};
-      db.update(table: "state", where: "id=1", row: row);
-    } catch (e) {
-      throw (e);
-    }
-  }
-
-  Future<Map<String, String>> getInitialState() async {
-    Map<String, String> result = {
-      "root_path": null,
-      "upload_path": null,
-      "server_name": null,
-      "server_api_key": null
-    };
-    try {
-      List<Map<String, dynamic>> res = await db.select(
-          table: "state",
-          where: "id=1",
-          columns: "upload_path,root_path,server_name,server_api_key");
-      if (res[0]["upload_path"].toString() != "null")
-        result["upload_path"] = res[0]["upload_path"].toString();
-      if (res[0]["root_path"].toString() != "null")
-        result["root_path"] = res[0]["root_path"].toString();
-      if (res[0]["server_name"].toString() != "null")
-        result["server_name"] = res[0]["server_name"].toString();
-      if (res[0]["server_api_key"].toString() != "null")
-        result["server_api_key"] = res[0]["server_api_key"].toString();
-    } catch (e) {
-      throw (e);
-    }
-    return result;
-  }*/
-
-  Future<DataLink> getDataLink(int id) async {
+  Future<DataLink> getActiveDataLink() async {
     DataLink dl;
+    List<Map<String, dynamic>> res;
     try {
-      List<Map<String, dynamic>> res =
-          await db.select(table: "data_link", where: 'id=$id');
+      res = await db.join(
+          table: "state",
+          where: 'state.id=1',
+          joinTable: "data_link",
+          columns: "data_link.name as name,data_link.url as url," +
+              "data_link.id as id, data_link.port as port, " +
+              "data_link.api_key as api_key, data_link.protocol as " +
+              "protocol, data_link.type as type",
+          joinOn: "data_link.id=active_data_link",
+          verbose: true);
+    } catch (e) {
+      throw ("Can not select active datalink $e");
+    }
+    try {
       if (res.isEmpty) return null;
       dl = DataLink.fromJson(res[0]);
     } catch (e) {
-      throw (e);
+      throw ("Can not create datalink $e");
     }
     return dl;
-  }
-
-  Future<int> getActiveDataLinkId() async {
-    List<Map<String, dynamic>> result = await db.select(
-        table: "state", where: "id=1", columns: "active_data_link");
-    print("Q $result");
-    return int.tryParse(result[0]["active_data_link"].toString());
   }
 
   Future<List<DataLink>> getDataLinks() async {
@@ -127,11 +71,23 @@ class DataBase {
     return dataLinks;
   }
 
-  Future<void> updateActiveDataLinkState({DataLink dataLink}) async {
+  Future<int> getActiveDataLinkId(String name) async {
+    int id;
+    try {
+      List<Map<String, dynamic>> adl = await db.select(
+          table: "data_link", columns: "id", where: 'name="$name"');
+      id = int.tryParse(adl[0]["id"].toString());
+    } catch (e) {
+      throw (e);
+    }
+    return id;
+  }
+
+  /*Future<void> updateActiveDataLinkState({DataLink dataLink}) async {
     Map<String, String> row = {};
     List<Map<String, dynamic>> adl = await db.select(
         table: "data_link", columns: "id", where: 'name="${dataLink.name}"');
-    if (adl.isEmpty) throw ("Can not find active data link");
+    if (adl.isEmpty) throw ("Can not find active data link ${dataLink.name}");
     row["active_data_link"] = adl[0]["id"].toString();
     try {
       int updated = await db.update(table: "state", where: "id=1", row: row);
@@ -139,16 +95,16 @@ class DataBase {
     } catch (e) {
       throw (e);
     }
-  }
+  }*/
 
-  Future<void> setActiveDataLinkStateNull() async {
+  /*Future<void> setActiveDataLinkStateNull() async {
     try {
       Map<String, String> row = {"active_data_link": "NULL"};
-      await db.update(table: "state", where: "id=1", row: row);
+      await db.update(table: "state", where: "id=1", row: row, verbose: true);
     } catch (e) {
       throw (e);
     }
-  }
+  }*/
 
   Future<void> deleteDataLink(DataLink dataLink) async {
     try {
