@@ -108,7 +108,11 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
       String msg = "Can not connect to server: $err";
       log.errorFlash(msg);
       state.remoteViewActive = false;
-      Navigator.of(context).pushReplacementNamed("/file_explorer");
+      try {
+        Navigator.of(context).pushReplacementNamed("/file_explorer");
+      } catch (e) {
+        // The user has moved to another page in between
+      }
     }
   }
 
