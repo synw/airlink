@@ -6,9 +6,9 @@ A mobile file explorer with peer to peer file transfer and remote file server co
 
 ## Install
 
-Download [airlink.apk](https://github.com/synw/airlink/releases/download/0.1.0/airlink.apk) for Android or compile the source with Flutter.
+Download [airlink.apk](https://github.com/synw/airlink/releases/download/latest/airlink.apk) for Android or compile the source with Flutter.
 
-Download [airlink_server](https://github.com/synw/airlink/releases/download/0.2.0/airlink_server) for Linux or compile with Go. The server is not needed for peer to peer file transfer.
+Download [airlink_server](https://github.com/synw/airlink/releases/download/latest/airlink) for Linux or compile with Go. The server is not needed for peer to peer file transfer.
 
 ## Server mode
 
