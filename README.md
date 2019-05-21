@@ -22,9 +22,12 @@ Place a `config.json` file next to the binary:
 
    ```json
    {
+      "name": "Local file server",
       "port": "8084",
-      "apiKey": "API_KEY"
-   }
+      "api_key": "API_KEY",
+      "protocol": "http",
+      "type": "server"
+}
    ```
 
 To serve data create a `static` folder next to the server binary: this is the root folder for the data to be served
