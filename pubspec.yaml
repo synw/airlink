@@ -19,26 +19,27 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_slidable: ^0.4.9
-  filesize: ^1.0.1
-  dio: ^2.0.20
-  archive: ^2.0.8
-  path_provider: ^1.1.0
-  open_file: ^2.0.1+2
-  flutter_downloader: ^1.1.7
+  flutter_slidable: ^0.5.3
+  filesize: ^1.0.4
+  dio: ^2.1.16
+  archive: ^2.0.10
+  path_provider: ^1.2.0
+  open_file: ^2.0.3
+  flutter_downloader: ^1.2.1
   card_settings: ^1.4.1
   qrcode_reader: ^0.4.4
-  qr_flutter: ^2.0.0+51
+  qr_flutter: ^3.0.1
   wifi: ^0.1.5
-  uuid: ^2.0.1
-  device_info: ^0.4.0+1
+  uuid: ^2.0.2
+  device_info: ^0.4.0+2
   scoped_model: ^1.0.1
   folder_picker: ^0.2.1
   audioplayer: ^0.5.2
   body_parser: ^1.1.1
-  err: ^0.7.3
-  sqlcool: ^2.8.1
-  persistent_state: ^0.1.0
+  err: ^0.8.0
+  sqlcool: ^3.2.1
+  pedantic: ^1.6.0
+  kvsql: ^0.2.1
 
 
   # The following adds the Cupertino Icons font to your application.
