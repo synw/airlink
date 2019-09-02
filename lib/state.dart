@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:pedantic/pedantic.dart';
 import 'package:scoped_model/scoped_model.dart';
-import 'package:persistent_state/persistent_state.dart';
+import 'package:kvsql/kvsql.dart';
 import 'package:dio/dio.dart';
 import "models/filesystem.dart";
 import "models/data_link.dart";
@@ -15,8 +16,7 @@ AppState state;
 class AppState extends Model {
   AppState({this.verbose = false}) {
     assert(db.db.isReady);
-    store = PersistentState(db: db.db, table: "state", verbose: true);
-    store.init();
+    store = KvStore(db: db.db, inMemory: true, verbose: true);
   }
 
   final bool verbose;
@@ -27,30 +27,30 @@ class AppState extends Model {
   var fileServer = FileServer();
   bool serverIsConfigured = false;
   bool remoteViewActive = false;
-  String remotePath = "/";
+  String remotePath = "";
   List<DirectoryItem> directoryItems;
   RemoteDirectoryListing remoteDirectoryListing;
 
   final Completer<Null> _readyCompleter = Completer<Null>();
-  PersistentState store;
+  KvStore store;
 
   Future<Null> get onReady => _readyCompleter.future;
 
-  String get serverName => store.select("server_name");
+  String get serverName => store.selectSync<String>("server_name");
   set serverName(String value) {
-    store.mutate("server_name", value);
+    store.put<String>("server_name", value);
     _notify("set server name to $value");
   }
 
-  String get serverApiKey => store.select("api_key");
+  String get serverApiKey => store.selectSync<String>("api_key");
   set serverApiKey(String value) {
-    store.mutate("api_key", value);
+    store.put<String>("api_key", value);
     _notify("set api key to $value");
   }
 
-  String get localPath => store.select("local_path");
+  String get localPath => store.selectSync<String>("local_path");
   set localPath(String value) {
-    store.mutate("local_path", value);
+    store.put<String>("local_path", value);
     _notify("set local path to $value");
   }
 
@@ -58,23 +58,29 @@ class AppState extends Model {
 
   Directory get rootDirectory => _getRootDirectory();
   set rootDirectory(Directory directory) {
-    store.mutate("root_path", directory.path);
+    store.put<String>("root_path", directory.path);
     _notify("set root path to ${directory.path}");
   }
+
+  int get activeDataLinkId => store.selectSync<int>("active_datalink_id");
+  set activeDataLinkId(int v) => store.put<int>("active_datalink_id", v);
 
   Future<void> init() async {
     await store.onReady;
     // active data link
-    activeDataLink = await db.getActiveDataLink();
+    activeDataLink = await db.getActiveDataLink(activeDataLinkId);
     //int activeDataLinkId = await db.getActiveDataLinkId();
     print("ACTIVE DL $activeDataLink");
-    if (activeDataLink != null) httpClient = _getHttpClient();
+    if (activeDataLink != null) {
+      httpClient = _getHttpClient();
+    }
     //log.debug("STATE ADL $activeDataLink");
     // server directories
     //String rootDirectoryStr = store.select("root_directory");
     //if (rootDirectoryStr != null) rootDirectory = Directory(rootDirectoryStr);
     //serverName = await store.select("server_name");
     //serverApiKey = await store.select("api_key");
+    localPath ??= "/";
     checkServerConfig();
     print("STATE INITIALIZED:");
     print("- Server conf: $serverIsConfigured");
@@ -85,12 +91,12 @@ class AppState extends Model {
 
   void navigate(BuildContext context, String route) {
     Navigator.of(context).pushNamed(route);
-    //store.mutate("page", route);
+    store.push("page", route);
   }
 
   void navigateReplacement(BuildContext context, String route) {
     Navigator.of(context).pushReplacementNamed(route);
-    store.mutate("page", route);
+    store.push("page", route);
   }
 
   void toggleRemoteView() {
@@ -114,13 +120,15 @@ class AppState extends Model {
         serverIp != null &&
         serverApiKey != null) {
       serverIsConfigured = true;
-    } else
+    } else {
       serverIsConfigured = false;
+    }
+
     _notify("check server config");
   }
 
   Future<void> setActiveDataLinkNull() async {
-    store.mutate("active_data_link", "NULL");
+    store.push("active_data_link", "NULL");
     _notify("set active data link to null");
   }
 
@@ -133,14 +141,14 @@ class AppState extends Model {
     // persist
     try {
       // data
-      db.upsertDataLink(dataLink: dataLink);
+      await db.upsertDataLink(dataLink: dataLink);
       // state
-      int id = await db.getActiveDataLinkId(dataLink.name);
-      store.mutate("active_data_link", id.toString());
+      final id = await db.getActiveDataLinkId(dataLink.name);
+      activeDataLinkId = id;
     } catch (e) {
       throw ('Can not update persistant state $e');
     }
-    log.debug("STATE active dl SET: $activeDataLink");
+    unawaited(log.debug("STATE active dl SET: $activeDataLink"));
     _notify("set active data link to $activeDataLink");
   }
 
@@ -157,7 +165,9 @@ class AppState extends Model {
   }
 
   void _notify(String msg) {
-    if (verbose) log.debug("STATE CHANGE: $msg");
+    if (verbose) {
+      log.debug("STATE CHANGE: $msg");
+    }
     notifyListeners();
   }
 
@@ -167,14 +177,16 @@ class AppState extends Model {
   }
 
   Directory _getRootDirectory() {
-    String rootDirectoryStr = store.select("root_path");
-    if (rootDirectoryStr != null) return Directory(rootDirectoryStr);
+    final rootDirectoryStr = store.selectSync<String>("root_path");
+    if (rootDirectoryStr != null) {
+      return Directory(rootDirectoryStr);
+    }
     return null;
   }
 
   String _getPage() {
     String s;
-    String value = store.select("page");
+    final value = store.selectSync<String>("page");
     switch ("$value" == "null") {
       case false:
         s = value;

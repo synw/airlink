@@ -203,6 +203,7 @@ class FileServer {
               requestUrl: request.uri.path);
           return false;
       }
+      return true;
     });
     _isRunning = true;
     return true;

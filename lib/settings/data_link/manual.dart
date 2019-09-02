@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:card_settings/card_settings.dart';
+import 'package:pedantic/pedantic.dart';
 import '../../models/data_link.dart';
 import '../../state.dart';
 import '../../log.dart';
@@ -28,7 +29,7 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
   Future<void> save(BuildContext context) async {
     String protocol;
     https ? protocol = "http" : protocol = "http";
-    DataLink dataLink = DataLink(
+    final dataLink = DataLink(
         name: name,
         url: url,
         apiKey: apiKey,
@@ -37,10 +38,12 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
         port: "$port");
     // update persistant state
     try {
+      print("SET STATE ADL: $dataLink");
       await state.setActiveDataLink(context: context, dataLink: dataLink);
     } catch (e) {
-      log.errorScreen("Can not update active datalink $e", context: context);
-      throw (e);
+      unawaited(log.errorScreen("Can not update active datalink $e",
+          context: context));
+      rethrow;
     }
   }
 
@@ -61,16 +64,20 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
                   initialValue: name,
                   label: 'Name',
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'The name is required.';
+                    }
+                    return value;
                   },
                   onChanged: (value) => name = value),
               CardSettingsText(
                   initialValue: url,
                   label: 'Url',
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'The url is required.';
+                    }
+                    return value;
                   },
                   onChanged: (value) => url = value),
               CardSettingsSwitch(
@@ -81,8 +88,10 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
                   label: 'Api key',
                   initialValue: apiKey,
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'The api key is required.';
+                    }
+                    return value;
                   },
                   onChanged: (value) => apiKey = value),
               CardSettingsInt(
@@ -95,7 +104,7 @@ class _AddDataLinkManualState extends State<AddDataLinkManual> {
                     await save(context).then((_) {
                       Navigator.of(context).pushReplacementNamed('/settings');
                     });
-                    log.infoFlash("Data link saved");
+                    unawaited(log.infoFlash("Data link saved"));
                   })
             ],
           ),

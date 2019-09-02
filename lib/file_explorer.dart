@@ -18,26 +18,26 @@ class _ExplorerListingState extends State<ExplorerListing> {
   }
 
   List<Widget> buildList() {
-    var w = <Widget>[];
-    if (state.localPath != "/" && state.localPath != "")
+    final w = <Widget>[];
+    if (state.localPath != "/" && state.localPath != "") {
       w.add(GestureDetector(
         child: ListTile(
           leading: const Icon(Icons.arrow_upward),
           title: const Text("..", textScaleFactor: 1.5),
         ),
         onTap: () {
-          var li = state.localPath.split("/");
-          li.removeLast();
+          final li = state.localPath.split("/")..removeLast();
           state.localPath = li.join("/");
           lsDir();
         },
       ));
+    }
     for (var item in state.directoryItems) {
       w.add(Slidable(
         key: Key(item.filename),
         controller: _slidableController,
         direction: Axis.horizontal,
-        delegate: const SlidableBehindDelegate(),
+        actionPane: SlidableDrawerActionPane(),
         actionExtentRatio: 0.25,
         child: _buildVerticalListItem(context, item),
         actions: _getSlideIconActions(context, item),
@@ -92,11 +92,11 @@ class _ExplorerListingState extends State<ExplorerListing> {
           color: Colors.lightBlue,
           icon: Icons.file_upload,
           onTap: () => upload(
-                serverUrl: state.activeDataLink.address,
-                filename: item.filename,
-                file: File(item.item.path),
-                context: context,
-              ),
+            serverUrl: state.activeDataLink.address,
+            filename: item.filename,
+            file: File(item.item.path),
+            context: context,
+          ),
         ));
       } else if (item.item is Directory) {
         ic.add(IconSlideAction(

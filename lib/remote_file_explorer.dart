@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:filesize/filesize.dart';
 import 'package:dio/dio.dart';
+import 'package:pedantic/pedantic.dart';
 import 'models/filesystem.dart';
 import 'file_icons.dart';
 import 'downloader.dart';
@@ -56,7 +57,7 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
         key: Key(file.name),
         controller: _slidableController,
         direction: Axis.horizontal,
-        delegate: const SlidableBehindDelegate(),
+        actionPane: SlidableBehindActionPane(),
         actionExtentRatio: 0.25,
         child: ListTile(
             dense: true,
@@ -103,13 +104,13 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
   }
 
   Future<void> getData() async {
-    dynamic err = await fetchData(state.remotePath);
+    final dynamic err = await fetchData(state.remotePath);
     if (err != null) {
-      String msg = "Can not connect to server: $err";
-      log.errorFlash(msg);
+      final msg = "Can not connect to server: $err";
+      unawaited(log.errorFlash(msg));
       state.remoteViewActive = false;
       try {
-        Navigator.of(context).pushReplacementNamed("/file_explorer");
+        await Navigator.of(context).pushReplacementNamed("/file_explorer");
       } catch (e) {
         // The user has moved to another page in between
       }
@@ -119,16 +120,15 @@ class _RemoteFileExplorerState extends State<RemoteFileExplorer> {
   Future<dynamic> fetchData(String _remotePath) async {
     assert(state.activeDataLink != null);
     assert(state.httpClient != null);
-    log.debug("GET ${state.activeDataLink.address}");
-    log.debug("PATH $_remotePath");
+    unawaited(log.debug("GET ${state.activeDataLink.address}"));
+    unawaited(log.debug("PATH $_remotePath"));
     try {
-      /*var response = await state.httpClient.post<Map<String, dynamic>>(
+      final formData = FormData.from(<String, dynamic>{"path": _remotePath});
+      final response = await state.httpClient.post<Map<String, dynamic>>(
           "${state.activeDataLink.address}/ls",
-          data: <String, dynamic>{"path": _remotePath});*/
-      FormData formData = FormData.from(<String, dynamic>{"path": _remotePath});
-      Response<Map<String, dynamic>> response = await state.httpClient
-          .post<Map<String, dynamic>>("${state.activeDataLink.address}/ls",
-              data: formData);
+          data: formData);
+      print("FORM DATA: $formData");
+      print("RESPONSE DATA: ${response.data}");
       state.setRemoteDirectoryListing(
           RemoteDirectoryListing.fromJson(response.data));
     } on DioError catch (e) {

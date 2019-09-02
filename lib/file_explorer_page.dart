@@ -49,6 +49,13 @@ class _FileExplorerPageState extends State<FileExplorerPage> {
                       _addDir(context);
                     },
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.description),
+                    tooltip: 'Logs',
+                    onPressed: () {
+                      Navigator.of(context).pushNamed("/console");
+                    },
+                  ),
                   state.activeDataLink != null
                       ? state.remoteViewActive
                           ? IconButton(

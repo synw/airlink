@@ -2,13 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqlcool/sqlcool.dart';
+import 'package:kvsql/kvsql.dart';
 import "models/data_link.dart";
 
 class DataBase {
   final db = Db();
 
   List<DbTable> schema() {
-    DbTable dataLink = DbTable("data_link")
+    final dataLink = DbTable("data_link")
       ..varchar("name", unique: true)
       ..varchar("url")
       ..integer("port", defaultValue: 8084)
@@ -16,45 +17,33 @@ class DataBase {
       ..varchar("protocol", check: 'protocol="http" OR protocol="https"')
       ..varchar("type", check: 'type="device" OR type="server"')
       ..index("name");
-    DbTable state = DbTable("state")
-      ..varchar("root_path", nullable: true)
-      ..varchar("server_name", nullable: true)
-      ..varchar("local_path", defaultValue: '/')
-      ..varchar("api_key", nullable: true)
-      ..varchar("page", nullable: true)
-      ..foreignKey("active_data_link", reference: "data_link", nullable: true);
-    return <DbTable>[dataLink, state];
+    return <DbTable>[dataLink, kvSchema()];
   }
 
   Future<void> init({@required String path}) async {
     try {
-      String q4 = """INSERT INTO state(id) VALUES(1)""";
-      await db.init(path: path, schema: schema(), queries: [q4], verbose: true);
-      assert(db.schema != null);
+      await db.init(path: path, schema: schema(), verbose: true);
     } catch (e) {
-      throw (e);
+      rethrow;
     }
   }
 
-  Future<DataLink> getActiveDataLink() async {
+  Future<DataLink> getActiveDataLink(int id) async {
     DataLink dl;
     List<Map<String, dynamic>> res;
     try {
-      res = await db.join(
-          table: "state",
-          where: 'state.id=1',
-          joinTable: "data_link",
-          columns: "data_link.name as name,data_link.url as url," +
-              "data_link.id as id, data_link.port as port, " +
-              "data_link.api_key as api_key, data_link.protocol as " +
-              "protocol, data_link.type as type",
-          joinOn: "data_link.id=active_data_link",
+      res = await db.select(
+          table: "data_link",
+          where: "id=$id",
+          columns: "name,url,api_key,protocol,type",
           verbose: true);
     } catch (e) {
       throw ("Can not select active datalink $e");
     }
     try {
-      if (res.isEmpty) return null;
+      if (res.isEmpty) {
+        return null;
+      }
       dl = DataLink.fromJson(res[0]);
     } catch (e) {
       throw ("Can not create datalink $e");
@@ -63,8 +52,8 @@ class DataBase {
   }
 
   Future<List<DataLink>> getDataLinks() async {
-    var result = await db.select(table: "data_link", verbose: true);
-    var dataLinks = <DataLink>[];
+    final result = await db.select(table: "data_link", verbose: true);
+    final dataLinks = <DataLink>[];
     result.forEach((Map<String, dynamic> item) {
       dataLinks.add(DataLink.fromJson(item));
     });
@@ -74,11 +63,11 @@ class DataBase {
   Future<int> getActiveDataLinkId(String name) async {
     int id;
     try {
-      List<Map<String, dynamic>> adl = await db.select(
+      final adl = await db.select(
           table: "data_link", columns: "id", where: 'name="$name"');
       id = int.tryParse(adl[0]["id"].toString());
     } catch (e) {
-      throw (e);
+      rethrow;
     }
     return id;
   }
@@ -108,9 +97,9 @@ class DataBase {
 
   Future<void> deleteDataLink(DataLink dataLink) async {
     try {
-      db.delete(table: "data_link", where: "id=${dataLink.id}");
+      await db.delete(table: "data_link", where: "id=${dataLink.id}");
     } catch (e) {
-      throw (e);
+      rethrow;
     }
   }
 
@@ -129,7 +118,7 @@ class DataBase {
           },
           verbose: true);
     } catch (e) {
-      throw (e);
+      rethrow;
     }
   }
 }

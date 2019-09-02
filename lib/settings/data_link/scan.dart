@@ -11,9 +11,9 @@ AudioPlayer audioPlayer = AudioPlayer();
 Future<DataLink> scanDataLinkConfig() async {
   DataLink dl;
   await QRCodeReader().scan().then((dataString) {
-    //print("SCANNED $dataString");
+    print("SCANNED $dataString");
     playBeep();
-    dynamic data = json.decode(dataString);
+    final dynamic data = json.decode(dataString);
     dl = DataLink.fromJson(data);
   });
   return dl;
@@ -21,7 +21,7 @@ Future<DataLink> scanDataLinkConfig() async {
 
 Future playBeep() async {
   final dir = documentsDirectory;
-  final file = new File("${dir.path}/beep.mp3");
+  final file = File("${dir.path}/beep.mp3");
   if (!(await file.exists())) {
     final soundData = await rootBundle.load("assets/beep.mp3");
     final bytes = soundData.buffer.asUint8List();

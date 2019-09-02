@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:path/path.dart';
 import 'package:flutter/material.dart';
+import 'package:pedantic/pedantic.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:wifi/wifi.dart';
@@ -22,24 +23,26 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
     try {
       ip = await Wifi.ip;
     } catch (e) {
-      log.errorFlash("Can not get device's ip address. Please check the " +
-          "internet the connection");
-      log.error("$e");
+      unawaited(log.errorFlash(
+          "Can not get device's ip address. Please check the " +
+              "internet the connection"));
+      unawaited(log.error("$e"));
       return;
     }
     if (ip == null) {
-      log.errorFlash("Can not get device's ip address. Please check the " +
-          "internet the connection");
+      unawaited(log.errorFlash(
+          "Can not get device's ip address. Please check the " +
+              "internet the connection"));
       return;
     }
     state.serverIp = ip;
     await initServerConfig();
-    state.store.describe();
     state.checkServerConfig();
     print("-----------");
-    state.store.describe();
     print("Server is configured: ${state.serverIsConfigured}");
-    if (state.serverIsConfigured) generateQrCode().then((_) => setState(() {}));
+    if (state.serverIsConfigured) {
+      await generateQrCode().then((_) => setState(() {}));
+    }
   }
 
   @override
@@ -49,16 +52,17 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
   }
 
   Future<void> initServerConfig() async {
-    log.debug("NAME: ${state.serverName} ${state.serverName.runtimeType}");
-    log.debug("API KEY: ${state.serverApiKey}");
+    unawaited(
+        log.debug("NAME: ${state.serverName} ${state.serverName.runtimeType}"));
+    unawaited(log.debug("API KEY: ${state.serverApiKey}"));
     state.serverApiKey = state.serverApiKey ?? Uuid().v1();
     if (state.serverName == null) {
-      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      final deviceInfo = DeviceInfoPlugin();
+      final androidInfo = await deviceInfo.androidInfo;
       state.serverName = androidInfo.model;
     }
-    log.debug("NAME: ${state.serverName}");
-    log.debug("API KEY: ${state.serverApiKey}");
+    unawaited(log.debug("NAME: ${state.serverName}"));
+    unawaited(log.debug("API KEY: ${state.serverApiKey}"));
   }
 
   @override
@@ -167,12 +171,12 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
               MaterialPageRoute(builder: (BuildContext context) {
             return FolderPicker(
                 rootDirectory: externalDirectory,
-                action: (BuildContext context, Directory folder) {
+                action: (BuildContext context, Directory folder) async {
                   state.rootDirectory = folder;
                   state.checkServerConfig();
-                  state.store.describe();
-                  if (state.serverIsConfigured)
-                    generateQrCode().then((_) => setState(() {}));
+                  if (state.serverIsConfigured) {
+                    await generateQrCode().then((_) => setState(() {}));
+                  }
                 });
           }));
         });
@@ -180,17 +184,17 @@ class _ConfigureServerPageState extends State<ConfigureServerPage> {
 
   Future<void> generateQrCode() async {
     print("GENERATING QR CODE");
-    Map<String, String> dataMap = {
+    final dataMap = <String, String>{
       "name": state.serverName,
       "url": state.serverIp,
       "api_key": state.serverApiKey,
     };
-    String data = const JsonEncoder.withIndent("").convert(dataMap);
+    final data = const JsonEncoder.withIndent("").convert(dataMap);
     qrCode = QrImage(
       size: 320.0,
       version: 5,
       data: data,
-      onError: (dynamic e) => log.error("Can not generate qr code $e"),
+      //onError: (dynamic e) => log.error("Can not generate qr code $e"),
     );
   }
 

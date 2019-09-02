@@ -146,6 +146,7 @@ class AddDataLinkButtons extends StatelessWidget {
             ),
             onPressed: () {
               scanDataLinkConfig().then((DataLink dataLink) {
+                print("Datalink scanned: $dataLink");
                 Navigator.of(context).pop();
                 Navigator.of(context)
                     .pushReplacement<SettingsPage, AddDataLinkManual>(
@@ -165,7 +166,7 @@ class AddDataLinkButtons extends StatelessWidget {
                 //Navigator.of(context).pop();
               });
             }),
-        const Padding(padding: const EdgeInsets.only(bottom: 15.0)),
+        const Padding(padding: EdgeInsets.only(bottom: 15.0)),
         RaisedButton(
           child: Row(
             children: <Widget>[

@@ -15,5 +15,6 @@ Future<void> initConf() async {
   externalDirectory = await getExternalStorageDirectory();
   documentsDirectory = await getApplicationDocumentsDirectory();
   await db.init(path: "settings.sqlite");
+  print("EX DIR : ${externalDirectory.path}");
   _readyCompleter.complete();
 }
